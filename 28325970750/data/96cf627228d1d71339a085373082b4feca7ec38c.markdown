@@ -1,0 +1,328 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/planning.spec.ts >> Planning >> Recent Activities panel shows past activities; template click pre-fills the form
+- Location: tests/ui/planning.spec.ts:329:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: getByText('Recent Activities', { exact: true }).locator('xpath=ancestor::div[contains(@class, "rounded-xl")][1]').locator('h4').first()
+Expected: visible
+Timeout: 10000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 10000ms
+  - waiting for getByText('Recent Activities', { exact: true }).locator('xpath=ancestor::div[contains(@class, "rounded-xl")][1]').locator('h4').first()
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "Users":
+      - /url: /users
+      - img
+      - text: Users
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - heading "Create Spray Activity" [level=1]:
+    - img
+    - text: Create Spray Activity
+  - text: Create Spray Activity Greenhouses *
+  - button "Greenhouses *": Select greenhouse(s)
+  - text: Sprayers
+  - button "Select sprayers..."
+  - text: Assign To
+  - button "Select personnel..."
+  - text: Planned Water (L)
+  - spinbutton "Planned Water (L)"
+  - text: Est. Fills
+  - spinbutton "Est. Fills"
+  - text: Pesticides & Dosage *
+  - button "Add Pesticide":
+    - img
+    - text: Add Pesticide
+  - img
+  - paragraph: No pesticides selected
+  - paragraph: Click Add Pesticide to get started
+  - text: Number of Rows
+  - combobox: All
+  - text: 0 Rows Planned Time
+  - textbox "Planned Time": 09:00
+  - text: Notes
+  - textbox "Notes":
+    - /placeholder: Additional notes or special instructions...
+  - text: Select Planned Dates *
+  - button "Select Planned Dates":
+    - img
+    - text: Select Planned Dates
+  - text: Recurrence
+  - combobox: No Recurrence
+  - button "Schedule Activity" [disabled]:
+    - img
+    - text: Schedule Activity
+  - button "Print":
+    - img
+    - text: Print
+  - paragraph: "To save this planning, please fill: Greenhouse, Planned Date, Pesticide."
+  - img
+  - text: Cost Estimate
+  - img
+  - text: Water --
+  - img
+  - text: Pesticides
+  - paragraph: No pesticides selected
+  - img
+  - text: Recent Activities
+  - img
+  - paragraph: No recent activities found
+  - paragraph: Create your first activity to see templates here.
+```
+
+# Test source
+
+```ts
+  376 |    * Opens the planned-dates calendar if it is not already visible.
+  377 |    * The multi-select calendar stays open after each pick, so this is idempotent.
+  378 |    */
+  379 |   async openPlannedDatesCalendar(): Promise<void> {
+  380 |     if (!(await this.calendarPanel().isVisible())) {
+  381 |       await this.selectPlannedDatesButton.click();
+  382 |     }
+  383 |     await expect(this.calendarPanel()).toBeVisible({ timeout: 5_000 });
+  384 |   }
+  385 | 
+  386 |   /**
+  387 |    * Clicks an enabled day button in the currently-visible calendar month.
+  388 |    * Uses exact-match regex so "9" does not click "29".
+  389 |    */
+  390 |   async selectCalendarDay(day: number): Promise<void> {
+  391 |     await this.calendarPanel()
+  392 |       .locator('button:not([disabled])')
+  393 |       .filter({ hasText: new RegExp(`^${day}$`) })
+  394 |       .click();
+  395 |   }
+  396 | 
+  397 |   /** A date chip with the given text (e.g. "Jun 15, 2026") is visible in the form. */
+  398 |   async expectDateChipVisible(dateText: string): Promise<void> {
+  399 |     await expect(this.main.getByText(dateText)).toBeVisible();
+  400 |   }
+  401 | 
+  402 |   /** The form shows "N dates selected" near the date field. */
+  403 |   async expectDatesSelectedCount(count: number): Promise<void> {
+  404 |     await expect(this.main).toContainText(`${count} dates selected`);
+  405 |   }
+  406 | 
+  407 |   /**
+  408 |    * Asserts the chip for the given date contains a remove (×) button.
+  409 |    * Finds the smallest containing element that holds both the date text and a button.
+  410 |    */
+  411 |   async expectDateHasRemoveButton(dateText: string): Promise<void> {
+  412 |     const chip = this.main
+  413 |       .locator('*')
+  414 |       .filter({ hasText: new RegExp(dateText.replace(',', ',?')) })
+  415 |       .filter({ has: this.page.getByRole('button') })
+  416 |       .last();
+  417 |     await expect(chip.getByRole('button').first()).toBeVisible();
+  418 |   }
+  419 | 
+  420 |   // ── Recurrence ───────────────────────────────────────────────────────────
+  421 | 
+  422 |   /** Recurrence native select defaults to "No Recurrence". */
+  423 |   async expectRecurrenceDefault(): Promise<void> {
+  424 |     await expect(this.recurrenceSelect.locator('option:checked')).toHaveText('No Recurrence');
+  425 |   }
+  426 | 
+  427 |   /**
+  428 |    * Recurrence select has "No Recurrence" plus at least one additional option.
+  429 |    * Native <select> options are always in the DOM — no need to open it.
+  430 |    */
+  431 |   async expectRecurrenceDropdownOptions(): Promise<void> {
+  432 |     const options = this.recurrenceSelect.locator('option');
+  433 |     await expect(options.filter({ hasText: 'No Recurrence' })).toHaveCount(1);
+  434 |     expect(await options.count()).toBeGreaterThan(1);
+  435 |   }
+  436 | 
+  437 |   // ── Cost Estimate – Step 4 ───────────────────────────────────────────────
+  438 | 
+  439 |   /**
+  440 |    * Asserts the water row in the Cost Estimate panel has an SVG icon alongside
+  441 |    * the volume text.  The ARIA tree shows the icon as `img` + `text: Water X L`
+  442 |    * as siblings, so we find the nearest element that contains both.
+  443 |    */
+  444 |   async expectCostEstimateWaterIcon(): Promise<void> {
+  445 |     const waterRow = this.costEstimatePanel
+  446 |       .locator('*')
+  447 |       .filter({ has: this.page.locator('svg'), hasText: /Water.*L/ })
+  448 |       .first();
+  449 |     await expect(waterRow).toBeVisible();
+  450 |   }
+  451 | 
+  452 |   /** Disclaimer text is visible somewhere in the main content area. */
+  453 |   async expectCostEstimateDisclaimerVisible(): Promise<void> {
+  454 |     await expect(
+  455 |       this.main.getByText(/Costs shown are estimates/, { exact: false }).first(),
+  456 |     ).toBeVisible();
+  457 |   }
+  458 | 
+  459 |   // ── Recent Activities – Step 5 ───────────────────────────────────────────
+  460 | 
+  461 |   private get recentActivitiesPanel(): Locator {
+  462 |     return this.recentActivitiesLabel.locator(
+  463 |       'xpath=ancestor::div[contains(@class, "rounded-xl")][1]',
+  464 |     );
+  465 |   }
+  466 | 
+  467 |   /**
+  468 |    * Verifies the Recent Activities panel is visible and contains at least one
+  469 |    * activity item with: greenhouse name (h4), a date, a "Completed" badge, and
+  470 |    * the "Click to use template" action link.
+  471 |    */
+  472 |   async expectRecentActivitiesVisible(): Promise<void> {
+  473 |     const panel = this.recentActivitiesPanel;
+  474 |     await expect(panel).toBeVisible();
+  475 |     // Wait for the async fetch to populate the panel before asserting items.
+> 476 |     await expect(panel.locator('h4').first()).toBeVisible({ timeout: 10_000 });
+      |                                               ^ Error: expect(locator).toBeVisible() failed
+  477 |     // textContent concatenates adjacent nodes without spaces, so no leading \b before month.
+  478 |     await expect(panel).toContainText(
+  479 |       /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/,
+  480 |     );
+  481 |     await expect(panel.getByText('Completed', { exact: true }).first()).toBeVisible();
+  482 |     // "Click to use template" is a styled <span> with onClick — not a semantic a/button.
+  483 |     await expect(panel.getByText('Click to use template', { exact: true }).first()).toBeVisible();
+  484 |   }
+  485 | 
+  486 |   /** Returns the greenhouse name from the first Recent Activity item's heading. */
+  487 |   async getFirstRecentActivityGreenhouse(): Promise<string> {
+  488 |     return (await this.recentActivitiesPanel.locator('h4').first().innerText()).trim();
+  489 |   }
+  490 | 
+  491 |   /**
+  492 |    * Clicks "Click to use template" on the first recent activity.
+  493 |    * The form then pre-fills with that activity's data.
+  494 |    */
+  495 |   async clickFirstUseTemplate(): Promise<void> {
+  496 |     await this.recentActivitiesPanel
+  497 |       .getByText('Click to use template', { exact: true })
+  498 |       .first()
+  499 |       .click();
+  500 |   }
+  501 | 
+  502 |   /** Print button is visible in the form footer beside Schedule Activity. */
+  503 |   async expectFormPrintButtonVisible(): Promise<void> {
+  504 |     await expect(this.main.getByRole('button', { name: 'Print' })).toBeVisible();
+  505 |   }
+  506 | 
+  507 |   /**
+  508 |    * Clicks the form-level Print button, waits for the print document to open
+  509 |    * in a new tab (same pattern as activity-detail print), suppresses the
+  510 |    * browser print dialog via context().addInitScript(), then closes the tab.
+  511 |    */
+  512 |   async clickFormPrintAndAssertTriggered(): Promise<void> {
+  513 |     await this.page.context().addInitScript(() => {
+  514 |       window.print = () => {};
+  515 |     });
+  516 |     const [printPage] = await Promise.all([
+  517 |       this.page.context().waitForEvent('page'),
+  518 |       this.main.getByRole('button', { name: 'Print' }).click(),
+  519 |     ]);
+  520 |     await printPage.waitForLoadState('domcontentloaded').catch(() => {});
+  521 |     await printPage.close();
+  522 |   }
+  523 | 
+  524 |   private get scheduleSuccessModal(): Locator {
+  525 |     return this.page.locator('[role="dialog"]').filter({ hasText: 'Activity Scheduled' });
+  526 |   }
+  527 | 
+  528 |   /** Schedule Activity button is disabled (required fields not yet filled). */
+  529 |   async expectScheduleButtonDisabled(): Promise<void> {
+  530 |     await expect(this.scheduleButton).toBeDisabled();
+  531 |   }
+  532 | 
+  533 |   /** Schedule Activity button is enabled (all required fields filled). */
+  534 |   async expectScheduleButtonEnabled(): Promise<void> {
+  535 |     await expect(this.scheduleButton).toBeEnabled();
+  536 |   }
+  537 | 
+  538 |   /** Inline validation paragraph listing at least one missing required field is visible. */
+  539 |   async expectScheduleValidationVisible(): Promise<void> {
+  540 |     await expect(this.main.getByText(/please fill/i, { exact: false })).toBeVisible();
+  541 |   }
+  542 | 
+  543 |   /** Clicks the Schedule Activity submit button. */
+  544 |   async clickScheduleActivity(): Promise<void> {
+  545 |     await this.scheduleButton.click();
+  546 |   }
+  547 | 
+  548 |   /**
+  549 |    * Asserts the "Activity Scheduled" success modal is open with the correct
+  550 |    * heading, confirmation body text, and both action buttons.
+  551 |    * The modal's presence confirms the form is overlaid/dimmed behind it.
+  552 |    */
+  553 |   async expectActivityScheduledModal(): Promise<void> {
+  554 |     const modal = this.scheduleSuccessModal;
+  555 |     // Creating multiple activities (one per selected date) in a single submit
+  556 |     // can take noticeably longer than a single-date schedule under staging load.
+  557 |     await expect(modal).toBeVisible({ timeout: 20_000 });
+  558 |     await expect(modal.getByRole('heading', { name: 'Activity Scheduled' })).toBeVisible();
+  559 |     await expect(modal).toContainText('The activity was scheduled successfully.');
+  560 |     await expect(modal.getByRole('button', { name: 'Print' })).toBeVisible();
+  561 |     await expect(modal.getByRole('button', { name: 'Done' })).toBeVisible();
+  562 |   }
+  563 | 
+  564 |   /**
+  565 |    * From within the success modal, clicks Print, waits for the print document
+  566 |    * to open in a new tab, suppresses the browser print dialog, then closes
+  567 |    * the tab so the modal remains in focus.
+  568 |    */
+  569 |   async clickModalPrintAndAssertTriggered(): Promise<void> {
+  570 |     await this.page.context().addInitScript(() => {
+  571 |       window.print = () => {};
+  572 |     });
+  573 |     const [printPage] = await Promise.all([
+  574 |       this.page.context().waitForEvent('page'),
+  575 |       this.scheduleSuccessModal.getByRole('button', { name: 'Print' }).click(),
+  576 |     ]);
+```

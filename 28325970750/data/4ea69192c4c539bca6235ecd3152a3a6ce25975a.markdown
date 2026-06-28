@@ -1,0 +1,258 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/greenhouse-create.spec.ts >> Resources -> Greenhouses (Create) >> Create greenhouse: fill all fields, assert behaviour, persist, and clean up
+- Location: tests/ui/greenhouse-create.spec.ts:26:3
+
+# Error details
+
+```
+Error: expect(locator).toContainText(expected) failed
+
+Locator: locator('div.rounded-xl.border.bg-card').filter({ hasText: 'test greenhouse 1782658376790' }).first()
+Expected pattern: /119\s*m²/
+Received string:  "test greenhouse 1782658376790141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasil←Move left→Move right↑Move up↓Move down+Zoom in-Zoom outHomeJump left by 75%EndJump right by 75%Page UpJump up by 75%Page DownJump down by 75%Map DataImagery ©2026 Airbus, CNES / Airbus, Maxar TechnologiesImagery ©2026 Airbus, CNES / Airbus, Maxar Technologies100 m Click to toggle between metric and imperial unitsTermsActive"
+Timeout: 5000ms
+
+Call log:
+  - Expect "toContainText" with timeout 5000ms
+  - waiting for locator('div.rounded-xl.border.bg-card').filter({ hasText: 'test greenhouse 1782658376790' }).first()
+    5 × locator resolved to <div class="rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow">…</div>
+      - unexpected value "test greenhouse 1782658376790141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasilActive"
+    8 × locator resolved to <div class="rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow">…</div>
+      - unexpected value "test greenhouse 1782658376790141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasil←Move left→Move right↑Move up↓Move down+Zoom in-Zoom outHomeJump left by 75%EndJump right by 75%Page UpJump up by 75%Page DownJump down by 75%Map DataImagery ©2026 Airbus, CNES / Airbus, Maxar TechnologiesImagery ©2026 Airbus, CNES / Airbus, Maxar Technologies100 m Click to toggle between metric and imperial unitsTermsActive"
+
+```
+
+```yaml
+- img
+- heading "test greenhouse 1782658376790" [level=4]
+- text: 141 m² • 100 Rows • Top area test • Basil
+- button "Keyboard shortcuts"
+- region "Map"
+- link "Open this area in Google Maps (opens a new window)":
+  - /url: https://maps.google.com/maps?ll=32.416524,34.979578&z=16&t=k&hl=en&gl=US&mapclient=apiv3
+  - img "Google"
+- button "Keyboard shortcuts"
+- button "Map Data"
+- link "Terms (opens in new tab)":
+  - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+  - text: Terms
+- text: Active
+- button "Edit Greenhouse":
+  - img
+- button "Delete greenhouse":
+  - img
+```
+
+# Test source
+
+```ts
+  473 |     }
+  474 |     await this.page.mouse.click(points[0][0], points[0][1]); // close the polygon
+  475 |   }
+  476 | 
+  477 |   /**
+  478 |    * Click `count` points (>=2) along a horizontal line on the map (path /
+  479 |    * crossing line). `yFraction` selects the vertical band so successive lines
+  480 |    * don't overlap each other or the central geofence (e.g. 0.3 = upper band for
+  481 |    * the main path, 0.7 = lower band for a crossing line).
+  482 |    */
+  483 |   async drawLinePoints(count = 2, yFraction = 0.5): Promise<void> {
+  484 |     const box = await this.geofenceMapBox();
+  485 |     const y = box.y + box.height * yFraction;
+  486 |     for (let i = 0; i < count; i++) {
+  487 |       const t = count === 1 ? 0.5 : i / (count - 1);
+  488 |       await this.page.mouse.click(box.x + box.width * (0.3 + 0.4 * t), y);
+  489 |       await this.page.waitForTimeout(300);
+  490 |     }
+  491 |   }
+  492 | 
+  493 |   /**
+  494 |    * After drawing a geofence: assert the Calculated Area panel shows a positive
+  495 |    * "<n> m²" with the note "Area calculated from geofence coordinates", and that
+  496 |    * the Area Size field auto-updated to the same value. Returns the area.
+  497 |    */
+  498 |   async expectCalculatedArea(): Promise<string> {
+  499 |     await expect(this.areaSizeInput).not.toHaveValue('', { timeout: 10_000 });
+  500 |     await expect(this.page.getByText(/Calculated Area:/)).toBeVisible();
+  501 |     await expect(this.calculatedAreaNote).toBeVisible();
+  502 |     const area = await this.areaValue();
+  503 |     expect(Number(area)).toBeGreaterThan(0);
+  504 |     // The panel shows the same number the Area Size field holds.
+  505 |     await expect(this.page.getByText(new RegExp(`\\b${area}\\s*m²`)).first()).toBeVisible();
+  506 |     return area;
+  507 |   }
+  508 | 
+  509 |   /** The N in the "Undo Last Point (N)" control. */
+  510 |   async undoPointCount(): Promise<number> {
+  511 |     const text = await this.undoLastPointButton.innerText();
+  512 |     return Number(text.match(/\((\d+)\)/)?.[1] ?? '0');
+  513 |   }
+  514 | 
+  515 |   async clickUndoLastPoint(): Promise<void> {
+  516 |     await this.undoLastPointButton.click();
+  517 |   }
+  518 | 
+  519 |   /** Click a contextual Clear control ("Clear Geofence/Main Path/Crossing Lines"). */
+  520 |   async clickClear(label: string): Promise<void> {
+  521 |     await this.page.getByRole('button', { name: label }).click();
+  522 |   }
+  523 | 
+  524 |   /**
+  525 |    * Submit the form (Step 5b). Scrolls the Save button into view, clicks it,
+  526 |    * and asserts the success indication: the form closes (Save/Cancel and the
+  527 |    * field inputs disappear) and the view returns to the Greenhouses list (the
+  528 |    * Add Greenhouse button is visible again, with the cards behind it).
+  529 |    */
+  530 |   async saveGreenhouse(): Promise<void> {
+  531 |     await this.saveButton.scrollIntoViewIfNeeded();
+  532 |     await this.saveButton.click();
+  533 |     await expect(this.saveButton).toBeHidden({ timeout: 15_000 });
+  534 |     await expect(this.nameInput).toBeHidden();
+  535 |     await expect(this.addGreenhouseButton).toBeVisible();
+  536 |     await expect(this.cards.first()).toBeVisible();
+  537 |   }
+  538 | 
+  539 |   async cancelForm(): Promise<void> {
+  540 |     await this.cancelButton.click();
+  541 |     await expect(this.nameInput).toBeHidden({ timeout: 10_000 });
+  542 |   }
+  543 | 
+  544 |   /** Type into the greenhouse search field (filters the card list). */
+  545 |   async searchFor(term: string): Promise<void> {
+  546 |     await this.searchField.fill(term);
+  547 |   }
+  548 | 
+  549 |   /** The greenhouse card whose text contains `name`. */
+  550 |   private cardByName(name: string): Locator {
+  551 |     return this.cards.filter({ hasText: name }).first();
+  552 |   }
+  553 | 
+  554 |   /** How many cards currently match `name` (0 once deleted/not created). */
+  555 |   async cardCount(name: string): Promise<number> {
+  556 |     return this.cards.filter({ hasText: name }).count();
+  557 |   }
+  558 | 
+  559 |   /**
+  560 |    * Assert the named greenhouse card shows the given fields. Area and rows are
+  561 |    * always checked; location and crop type are checked when supplied (they only
+  562 |    * render on the card when set). Also asserts the structural row fields (Step 6):
+  563 |    * a status badge, a map thumbnail (showing the drawn geofence), and the Edit/
+  564 |    * Delete action buttons.
+  565 |    */
+  566 |   async expectGreenhouseCard(
+  567 |     name: string,
+  568 |     opts: { area: string; rows: string; location?: string; cropType?: string; status?: string },
+  569 |   ): Promise<void> {
+  570 |     const card = this.cardByName(name);
+  571 |     await expect(card).toBeVisible({ timeout: 10_000 });
+  572 |     const areaInt = Math.round(Number(opts.area));
+> 573 |     await expect(card).toContainText(new RegExp(`${areaInt}\\s*m²`));
+      |                        ^ Error: expect(locator).toContainText(expected) failed
+  574 |     await expect(card).toContainText(new RegExp(`${opts.rows}\\s*Rows`));
+  575 |     if (opts.location) await expect(card).toContainText(opts.location);
+  576 |     if (opts.cropType) await expect(card).toContainText(opts.cropType);
+  577 |     await expect(card.getByText(opts.status ?? 'Active', { exact: true })).toBeVisible();
+  578 |     await expect(card.locator('div.h-24.w-48')).toBeVisible();
+  579 |     await expect(card.getByRole('button', { name: 'Edit Greenhouse' })).toBeVisible();
+  580 |     await expect(card.getByRole('button', { name: 'Delete greenhouse' })).toBeVisible();
+  581 |   }
+  582 | 
+  583 |   /** Open the Edit form for the named greenhouse (waits for the Name field). */
+  584 |   async openEditByName(name: string): Promise<void> {
+  585 |     await this.cardByName(name).getByRole('button', { name: 'Edit Greenhouse' }).click();
+  586 |     await expect(this.nameInput).toBeVisible({ timeout: 10_000 });
+  587 |   }
+  588 | 
+  589 |   /**
+  590 |    * Delete the named greenhouse via its trash button. Deletion is guarded by a
+  591 |    * NATIVE browser confirm() dialog, so we accept it via a one-shot handler.
+  592 |    */
+  593 |   async deleteByName(name: string): Promise<void> {
+  594 |     this.page.once('dialog', (dialog) => dialog.accept());
+  595 |     await this.cardByName(name).getByRole('button', { name: 'Delete greenhouse' }).click();
+  596 |     await expect(this.cards.filter({ hasText: name })).toHaveCount(0, { timeout: 10_000 });
+  597 |   }
+  598 | 
+  599 |   // ---- Water Stations (Water Fill Station Management) --------------------
+  600 |   //
+  601 |   // Confirmed against the live DOM (Ronen / staging-bar2 account):
+  602 |   //  - the Water Stations resource tab swaps the sub-heading to "Water Fill
+  603 |   //    Station Management" and replaces Greenhouses' List/Map toggle + Export
+  604 |   //    with a single "Add Station" button; search + the Name/↑ sort control stay.
+  605 |   //  - each station renders as the same card shell (div.rounded-xl.border.bg-card)
+  606 |   //    with a droplets icon (svg.lucide-droplets), an <h4> name, a "Flow Rate:
+  607 |   //    <n> L/min" line, an optional location, an italic notes line, a map
+  608 |   //    thumbnail (div.h-24.w-48), a status badge, and icon buttons titled
+  609 |   //    "Edit station" / "Delete station".
+  610 |   //  - the Add Station form fields are #name (required), #flow_rate (required),
+  611 |   //    #location, the Status <select> (Active/Inactive/Maintenance, default
+  612 |   //    Active), #notes, and an OPTIONAL map marker ("Clear Point"). Save reads
+  613 |   //    "Save Station"; delete is guarded by a native confirm() dialog.
+  614 |   //  - CONFIRMED BACKEND BUG: the API ignores the `status` field on BOTH create
+  615 |   //    (POST) and update (PUT) for water-fill-stations. The frontend sends the
+  616 |   //    chosen value correctly (e.g. {"status":"MAINTENANCE",...}) and the request
+  617 |   //    returns success, but the stored/returned record is always "ACTIVE"
+  618 |   //    (verified by inspecting the request payloads + GET read-back). The create
+  619 |   //    spec documents and asserts this real behaviour, so a server-side fix will
+  620 |   //    turn it red on purpose.
+  621 | 
+  622 |   /** Select the Water Stations tab; waits for it to activate + its heading. */
+  623 |   async selectWaterStationsTab(): Promise<void> {
+  624 |     await this.tab('Water Stations').click();
+  625 |     await expect(this.tab('Water Stations')).toHaveAttribute('aria-selected', 'true');
+  626 |     await expect(this.waterStationMgmtHeading).toBeVisible({ timeout: 10_000 });
+  627 |   }
+  628 | 
+  629 |   /** Water Stations view loaded: tab active + "Water Fill Station Management". */
+  630 |   async expectWaterStationsLoaded(): Promise<void> {
+  631 |     await expect(this.tab('Water Stations')).toHaveAttribute('aria-selected', 'true');
+  632 |     await expect(this.waterStationMgmtHeading).toBeVisible();
+  633 |   }
+  634 | 
+  635 |   /**
+  636 |    * The whole Water Stations CRUD stays on /settings - unlike other resource
+  637 |    * sections it never routes to a separate detail page, so every create/edit/
+  638 |    * delete assertion is scoped to this one page. Callers assert this at the
+  639 |    * transitions (open form, save) where a detail-page navigation might occur.
+  640 |    */
+  641 |   async expectStillOnSettings(): Promise<void> {
+  642 |     await expect(this.page).toHaveURL(/\/settings/);
+  643 |   }
+  644 | 
+  645 |   /** Add Station button, the station search field, and the sort control. */
+  646 |   async expectWaterStationsControls(): Promise<void> {
+  647 |     await expect(this.addStationButton).toBeVisible();
+  648 |     await expect(this.stationSearchField).toBeEditable();
+  649 |     await expect(this.stationSearchField).toHaveAttribute(
+  650 |       'placeholder',
+  651 |       ResourcesPage.STATION_SEARCH_PLACEHOLDER,
+  652 |     );
+  653 |     await expect(this.sortLabel.first()).toBeVisible();
+  654 |     await expect(this.sortDirectionToggle).toBeVisible();
+  655 |   }
+  656 | 
+  657 |   /**
+  658 |    * Spot-check the first `count` station cards for the structural fields a row
+  659 |    * should expose: droplets icon, name, "Flow Rate: <n> L/min", a map thumbnail,
+  660 |    * and the Edit/Delete action buttons.
+  661 |    */
+  662 |   async expectStationCardFields(count = 1): Promise<void> {
+  663 |     // The Resources page can briefly render with every tab count at 0 while data
+  664 |     // loads; wait for the list to settle (first card visible) before counting.
+  665 |     await expect(this.cards.first()).toBeVisible({ timeout: 15_000 });
+  666 |     const total = await this.cards.count();
+  667 |     expect(total).toBeGreaterThan(0);
+  668 |     const n = Math.min(count, total);
+  669 |     for (let i = 0; i < n; i++) {
+  670 |       const card = this.cards.nth(i);
+  671 |       await expect(card.locator('svg.lucide-droplets')).toBeVisible();
+  672 |       await expect(card.locator('h4')).not.toBeEmpty();
+  673 |       await expect(card).toContainText(/Flow Rate:\s*\d+\s*L\/min/);
+```
