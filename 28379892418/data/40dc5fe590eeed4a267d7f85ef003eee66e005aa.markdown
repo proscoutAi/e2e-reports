@@ -1,0 +1,389 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/activity-detail-scheduled.spec.ts >> Scheduled activity detail >> Scheduled detail shows the map, overview fields, and a printable document
+- Location: tests/ui/activity-detail-scheduled.spec.ts:16:3
+
+# Error details
+
+```
+Error: expect(locator).toBeVisible() failed
+
+Locator: locator('main').getByText('Average Speed', { exact: true })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Expect "toBeVisible" with timeout 5000ms
+  - waiting for locator('main').getByText('Average Speed', { exact: true })
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "Users":
+      - /url: /users
+      - img
+      - text: Users
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - button:
+    - img
+  - heading "Hod Hasharon - Weizman" [level=1]
+  - paragraph: "Area: 2,505 m² | Number of Rows: 0"
+  - paragraph: "Tuesday, June 30, 2026 | Planned Time: 18:00 | executed: N/A-N/A"
+  - text: Scheduled
+  - button "Mark as Executed":
+    - img
+    - text: Mark as Executed
+  - button "Edit":
+    - img
+    - text: Edit
+  - img
+  - text: Location Map
+  - button "Keyboard shortcuts"
+  - region "Map"
+  - menubar:
+    - menuitemradio "Show street map": Map
+    - menuitemradio "Show satellite imagery" [checked]: Satellite
+  - button "Toggle fullscreen view"
+  - button "Map camera controls"
+  - button "Drag Pegman onto the map to open Street View":
+    - img "Street View Pegman Control"
+  - button "Zoom in" [disabled]
+  - button "Zoom out"
+  - link "Open this area in Google Maps (opens a new window)":
+    - /url: https://maps.google.com/maps?ll=32.166583,34.903682&z=20&t=k&hl=en&gl=US&mapclient=apiv3
+    - img "Google"
+  - button "Keyboard shortcuts"
+  - text: Imagery ©2026 Airbus
+  - link "Terms (opens in new tab)":
+    - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+    - text: Terms
+  - link "Report a map error (opens in new tab)":
+    - /url: https://www.google.com/maps/@32.1665833,34.9036822,20z/data=!3m1!1e3!10m1!1e1!12b1?source=apiv3&rapsrc=apiv3
+    - text: Report a map error
+  - text: Activity Overview
+  - img
+  - text: Planning
+  - button "Print":
+    - img
+    - text: Print
+  - img
+  - paragraph: Planned Time
+  - text: 18:00
+  - img
+  - paragraph: Number of Rows
+  - text: "0"
+  - img
+  - paragraph: Est. Fills
+  - text: N/A
+  - img
+  - paragraph: Est. Water
+  - text: 1000.0 L
+  - img
+  - paragraph: Est. Pesticide
+  - text: 12525.0 ml
+  - img
+  - paragraph: Est. Cost
+  - text: $375.75 * Estimation only
+  - img
+  - heading "Assigned Personnel" [level=4]
+  - list:
+    - listitem: Ronen test
+  - img
+  - heading "Planned Sprayers" [level=4]
+  - list:
+    - listitem: beta3 1L
+  - img
+  - heading "Planned Pesticides" [level=4]
+  - list:
+    - listitem: CONFIDOR for garden 5.00 ml/m²
+  - img
+  - img
+  - text: Execution Completion Status
+  - img
+  - text: OK
+  - img
+  - paragraph:
+    - text: Actual Start Time
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Actual Duration
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Application Time
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Average Application Speed
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Num of Rows
+    - img
+  - text: NA/A
+  - img
+  - paragraph:
+    - text: Actual Fills
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Actual Water
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Actual Pesticide
+    - img
+  - text: N/A
+  - img
+  - paragraph:
+    - text: Actual Cost
+    - img
+  - text: N/A
+  - img
+  - heading "Actual Personnel" [level=4]
+  - list:
+    - listitem
+  - img
+  - heading "Actual Sprayers Used" [level=4]
+  - list:
+    - listitem: beta3 1L
+```
+
+# Test source
+
+```ts
+  24  |  */
+  25  | export class ActivityDetailPage extends BasePage {
+  26  |   readonly path = '/activitydetail';
+  27  | 
+  28  |   static readonly EXECUTION_FIELDS = [
+  29  |     'Actual Start Time', 'Actual Duration', 'Application Time', 'Average Speed',
+  30  |     'Num of Rows', 'Actual Fills', 'Actual Water', 'Actual Pesticide',
+  31  |     'Actual Cost', 'Actual Personnel', 'Actual Sprayers Used',
+  32  |   ] as const;
+  33  | 
+  34  |   static readonly BREAKDOWN_COLUMNS = [
+  35  |     'Sprayer Name', 'Water Amount (L)', 'Pesticide Amount (ml)', 'Fills',
+  36  |     'Duration (Min)', 'Cost ($)', 'Rows', 'Application Time (Min)', 'Avg Speed (km/h)',
+  37  |   ] as const;
+  38  | 
+  39  |   static readonly EFFICIENCY_ROWS = ['Spraying', 'Moving, not spraying', 'Filling', 'Stopped'] as const;
+  40  |   static readonly EFFICIENCY_COLUMNS = ['Activity', 'Time (min)', 'Percentage'] as const;
+  41  | 
+  42  |   private readonly main: Locator;
+  43  |   private readonly activityTitle: Locator;
+  44  |   private readonly locationMapCard: Locator;
+  45  |   private readonly breakdownTable: Locator;
+  46  |   private readonly coverageTable: Locator;
+  47  |   private readonly efficiencyTable: Locator;
+  48  |   private readonly editButton: Locator;
+  49  | 
+  50  |   constructor(page: Page) {
+  51  |     super(page);
+  52  |     this.main = page.locator('main');
+  53  |     // The visible page title is the greenhouse name; a hidden "DashBar" <h1>
+  54  |     // also lives in <main>, so exclude it.
+  55  |     this.activityTitle = this.main.getByRole('heading', { level: 1 }).filter({ hasNotText: 'DashBar' });
+  56  |     this.editButton = this.main.getByRole('button', { name: 'Edit' });
+  57  |     this.locationMapCard = this.main.locator('div.rounded-xl').filter({ hasText: 'Location Map' }).first();
+  58  |     this.breakdownTable = this.main.getByRole('table').filter({ hasText: 'Sprayer Name' });
+  59  |     this.coverageTable = this.main.getByRole('table').filter({ hasText: 'Perimeter coverage' });
+  60  |     this.efficiencyTable = this.main.getByRole('table').filter({ hasText: 'Moving, not spraying' });
+  61  |   }
+  62  | 
+  63  |   /** We landed on a detail page: URL carries a numeric id and the title rendered. */
+  64  |   async expectLoaded(): Promise<void> {
+  65  |     await expect(this.page).toHaveURL(/\/activitydetail\?id=\d+/, { timeout: 15_000 });
+  66  |     await expect(this.activityTitle).toBeVisible();
+  67  |   }
+  68  | 
+  69  |   /** Read the "Planned Time" value from the header date line. */
+  70  |   async plannedTime(): Promise<string> {
+  71  |     const line = await this.main.getByText(/Planned Time:/).first().innerText();
+  72  |     return (line.match(/Planned Time:\s*([0-9:]+|N\/A)/) || [])[1] ?? '';
+  73  |   }
+  74  | 
+  75  |   /** Click Edit -> navigates to the activity form (/planning). */
+  76  |   async clickEdit(): Promise<void> {
+  77  |     await this.editButton.click();
+  78  |     await this.page.waitForURL(/\/planning/, { timeout: 15_000 });
+  79  |   }
+  80  | 
+  81  |   // --- 4a Header ---
+  82  |   async expectHeader(): Promise<void> {
+  83  |     await expect(this.activityTitle).toBeVisible(); // greenhouse name (non-empty)
+  84  |     await expect(this.main.getByText(/Area:.*Number of Rows:/)).toBeVisible();
+  85  |     await expect(this.main.getByText(/Planned Time:.*executed:\s*\d{1,2}:\d{2}/)).toBeVisible();
+  86  |     await expect(this.main.getByText('Completed', { exact: true }).first()).toBeVisible();
+  87  |     await expect(this.main.getByRole('button', { name: 'Edit' })).toBeVisible();
+  88  |   }
+  89  | 
+  90  |   /**
+  91  |    * 4b - the Location Map is present: the card is visible and its map area is
+  92  |    * allocated with a real height. We assert presence only - the Google Maps
+  93  |    * tiles/overlay don't paint under automation, so we don't assert them.
+  94  |    */
+  95  |   async expectMapPresent(): Promise<void> {
+  96  |     await expect(this.locationMapCard).toBeVisible();
+  97  |     const box = await this.locationMapCard.boundingBox();
+  98  |     expect(box?.height ?? 0).toBeGreaterThan(300);
+  99  |   }
+  100 | 
+  101 |   /**
+  102 |    * Click Print and return the document it opens in a new tab. We neutralize
+  103 |    * window.print() first so the print dialog can't block the popup.
+  104 |    */
+  105 |   async openPrintDocument(): Promise<Page> {
+  106 |     await this.page.context().addInitScript(() => { window.print = () => {}; });
+  107 |     const [doc] = await Promise.all([
+  108 |       this.page.context().waitForEvent('page'),
+  109 |       this.main.getByRole('button', { name: 'Print' }).click(),
+  110 |     ]);
+  111 |     await doc.waitForLoadState('domcontentloaded').catch(() => {});
+  112 |     return doc;
+  113 |   }
+  114 | 
+  115 |   /**
+  116 |    * Activity Overview's section headings + every field label are present.
+  117 |    * Shared by both the executed and scheduled detail flows (a scheduled
+  118 |    * activity shows the same fields, just with not-yet-executed values).
+  119 |    */
+  120 |   async expectOverviewFieldsPresent(): Promise<void> {
+  121 |     await expect(this.main.getByText('Planning', { exact: true })).toBeVisible();
+  122 |     await expect(this.main.getByText('Execution', { exact: true })).toBeVisible();
+  123 |     for (const label of ActivityDetailPage.EXECUTION_FIELDS) {
+> 124 |       await expect(this.main.getByText(label, { exact: true })).toBeVisible();
+      |                                                                 ^ Error: expect(locator).toBeVisible() failed
+  125 |     }
+  126 |   }
+  127 | 
+  128 |   // --- 4d Activity Overview (Planning + Execution) - executed activity ---
+  129 |   async expectActivityOverview(): Promise<void> {
+  130 |     await this.expectOverviewFieldsPresent();
+  131 | 
+  132 |     // Completion Status shows a non-empty status badge. Invariant: we don't pin
+  133 |     // to "OK" (data-dependent) - just that the label's container holds a value
+  134 |     // beyond the label text.
+  135 |     const completion = this.main.getByText('Completion Status', { exact: true }).locator('xpath=..');
+  136 |     await expect(completion).not.toHaveText('Completion Status');
+  137 | 
+  138 |     // Each metric field has a non-empty value, verified by the value's FORMAT
+  139 |     // (a value of the right shape rendered) - not by its exact number. This
+  140 |     // also avoids coupling to per-field DOM (some fields are <h4> with the
+  141 |     // value rendered separately). "Actual Personnel" may be empty (per doc),
+  142 |     // so it has no value check; label presence above is enough.
+  143 |     await expect(this.main.getByText(/\d{1,2}:\d{2}/).first()).toBeVisible();   // Actual Start Time
+  144 |     await expect(this.main.getByText(/\d+\s*min/).first()).toBeVisible();        // duration / application time
+  145 |     await expect(this.main.getByText(/[\d.]+\s*km\/h/).first()).toBeVisible();   // Average Speed
+  146 |     await expect(this.main.getByText(/[\d.]+\s*L\b/).first()).toBeVisible();     // Actual Water
+  147 |     await expect(this.main.getByText(/[\d.]+\s*ml\b/).first()).toBeVisible();    // Actual Pesticide
+  148 |     await expect(this.main.getByText(/\$\s?[\d,.]+/).first()).toBeVisible();     // Actual Cost
+  149 | 
+  150 |     // "Estimation only" note under Actual Cost (expected per doc note).
+  151 |     await expect(this.main.getByText(/Estimation only/)).toBeVisible();
+  152 |   }
+  153 | 
+  154 |   // --- 4e Breakdown by Sprayer ---
+  155 |   async expectBreakdownTable(): Promise<void> {
+  156 |     await expect(this.main.getByText('Breakdown by Sprayer')).toBeVisible();
+  157 |     await expect(this.breakdownTable).toBeVisible();
+  158 |     for (const col of ActivityDetailPage.BREAKDOWN_COLUMNS) {
+  159 |       await expect(this.breakdownTable.getByRole('columnheader', { name: col })).toBeVisible();
+  160 |     }
+  161 |     const rows = this.breakdownTable.locator('tbody tr');
+  162 |     expect(await rows.count()).toBeGreaterThan(0);
+  163 |     // First row's cells are all non-empty.
+  164 |     const cells = rows.first().locator('td');
+  165 |     const cellCount = await cells.count();
+  166 |     for (let i = 0; i < cellCount; i++) {
+  167 |       await expect(cells.nth(i)).not.toBeEmpty();
+  168 |     }
+  169 |   }
+  170 | 
+  171 |   // --- 4f Execution Notes / Coverage metrics ---
+  172 |   async expectCoverageMetrics(): Promise<void> {
+  173 |     await expect(this.main.getByText('Total coverage of all tools (aggregated)')).toBeVisible();
+  174 |     await expect(this.coverageTable).toBeVisible();
+  175 |     // Both rows present, each with a percentage value (status symbol varies).
+  176 |     for (const metric of ['Coverage', 'Perimeter coverage']) {
+  177 |       const row = this.coverageTable.getByRole('row', { name: new RegExp(metric) });
+  178 |       await expect(row).toContainText(/\d+(\.\d+)?%/);
+  179 |     }
+  180 |   }
+  181 | 
+  182 |   // --- 4g Efficiency Analysis ---
+  183 |   async expectEfficiencyAnalysis(): Promise<void> {
+  184 |     await expect(this.main.getByText('Efficiency analysis')).toBeVisible();
+  185 |     await expect(this.efficiencyTable).toBeVisible();
+  186 |     for (const col of ActivityDetailPage.EFFICIENCY_COLUMNS) {
+  187 |       await expect(this.efficiencyTable.getByRole('columnheader', { name: col })).toBeVisible();
+  188 |     }
+  189 |     for (const row of ActivityDetailPage.EFFICIENCY_ROWS) {
+  190 |       await expect(this.efficiencyTable.getByText(row, { exact: true })).toBeVisible();
+  191 |     }
+  192 |     // Each row has a non-empty Time (min) value, and percentages sum to ~100%.
+  193 |     const rows = this.efficiencyTable.locator('tbody tr');
+  194 |     const count = await rows.count();
+  195 |     let sum = 0;
+  196 |     for (let i = 0; i < count; i++) {
+  197 |       const tds = rows.nth(i).locator('td');
+  198 |       await expect(tds.nth(1)).not.toBeEmpty(); // Time (min) value present
+  199 |       const last = await tds.last().innerText();
+  200 |       const pct = parseFloat(last.replace('%', '').trim());
+  201 |       if (!Number.isNaN(pct)) sum += pct;
+  202 |     }
+  203 |     expect(sum).toBeGreaterThan(99);
+  204 |     expect(sum).toBeLessThan(101);
+  205 |   }
+  206 | }
+  207 | 
+```

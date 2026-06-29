@@ -1,0 +1,237 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/water-station-create.spec.ts >> Resources -> Water Stations (Create) >> Status persists on create (BLOCKED: backend drops `status` on write)
+- Location: tests/ui/water-station-create.spec.ts:260:3
+
+# Error details
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: "maintenance"
+Received: "active"
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - generic [ref=e8]:
+    - generic [ref=e11]:
+      - img "ProScout logo" [ref=e12]
+      - heading "DashBar" [level=2] [ref=e14]
+    - generic [ref=e16]:
+      - generic [ref=e17]: Navigation
+      - list [ref=e19]:
+        - listitem [ref=e20]:
+          - link "Daily Summary" [ref=e21] [cursor=pointer]:
+            - /url: /dashboard
+            - img [ref=e22]
+            - generic [ref=e27]: Daily Summary
+        - listitem [ref=e28]:
+          - link "Planning" [ref=e29] [cursor=pointer]:
+            - /url: /planning
+            - img [ref=e30]
+            - generic [ref=e32]: Planning
+        - listitem [ref=e33]:
+          - link "Activities" [ref=e34] [cursor=pointer]:
+            - /url: /activities
+            - img [ref=e35]
+            - generic [ref=e37]: Activities
+        - listitem [ref=e38]:
+          - link "Resources" [ref=e39] [cursor=pointer]:
+            - /url: /settings
+            - img [ref=e40]
+            - generic [ref=e43]: Resources
+        - listitem [ref=e44]:
+          - link "Users" [ref=e45] [cursor=pointer]:
+            - /url: /users
+            - img [ref=e46]
+            - generic [ref=e51]: Users
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - generic [ref=e56]: AY
+        - generic [ref=e57]:
+          - paragraph [ref=e58]: Alex Y
+          - paragraph [ref=e59]: alex.y@revantlabs.com
+          - paragraph [ref=e60]: Ronen
+          - paragraph [ref=e61]: account admin
+      - generic [ref=e62]:
+        - button "Change language" [ref=e63] [cursor=pointer]:
+          - img
+          - generic [ref=e64]: Change language
+        - button "Logout" [ref=e65] [cursor=pointer]:
+          - img
+  - main [ref=e66]:
+    - generic [ref=e69]:
+      - heading "Resources" [level=1] [ref=e71]:
+        - img [ref=e72]
+        - text: Resources
+      - generic [ref=e77]:
+        - tablist [ref=e79]:
+          - tab "Greenhouses 10" [ref=e80] [cursor=pointer]:
+            - img [ref=e81]
+            - generic [ref=e85]: Greenhouses
+            - generic [ref=e86]: "10"
+          - tab "Water Stations 3" [selected] [ref=e87] [cursor=pointer]:
+            - img [ref=e88]
+            - generic [ref=e91]: Water Stations
+            - generic [ref=e92]: "3"
+          - tab "Sprayers 52" [ref=e93] [cursor=pointer]:
+            - img [ref=e94]
+            - generic [ref=e97]: Sprayers
+            - generic [ref=e98]: "52"
+          - tab "Pesticides 5" [ref=e99] [cursor=pointer]:
+            - img [ref=e100]
+            - generic [ref=e102]: Pesticides
+            - generic [ref=e103]: "5"
+          - tab "Personnel 1" [ref=e104] [cursor=pointer]:
+            - img [ref=e105]
+            - generic [ref=e110]: Personnel
+            - generic [ref=e111]: "1"
+        - tabpanel "Water Stations 3" [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - heading "Water Fill Station Management" [level=3] [ref=e116]
+              - button "Add Station" [ref=e117] [cursor=pointer]:
+                - img
+                - text: Add Station
+            - generic [ref=e118]:
+              - generic [ref=e119]:
+                - generic [ref=e120]:
+                  - img [ref=e121]
+                  - textbox "Search stations by name, location, or status..." [ref=e124]: bug status station 1782743967707
+                - generic [ref=e125]:
+                  - combobox [ref=e126] [cursor=pointer]:
+                    - generic [ref=e127]:
+                      - img [ref=e128]
+                      - generic: Name
+                    - img [ref=e131]
+                  - button "↑" [ref=e133] [cursor=pointer]
+              - paragraph [ref=e135]: No stations match your search.
+```
+
+# Test source
+
+```ts
+  195 |     page,
+  196 |     resourcesPage,
+  197 |   }) => {
+  198 |     const DELETE_MSG =
+  199 |       'Are you sure you want to delete this water fill station? This action cannot be undone.';
+  200 | 
+  201 |     await page.goto('/');
+  202 |     await resourcesPage.navigateFromSidebar();
+  203 |     await resourcesPage.expectLoaded();
+  204 |     await resourcesPage.selectWaterStationsTab();
+  205 | 
+  206 |     const name = `test waterstation ${Date.now()}`;
+  207 | 
+  208 |     try {
+  209 |       // Setup: create a station to delete, then filter to it.
+  210 |       await resourcesPage.openAddStationForm();
+  211 |       await resourcesPage.fillName(name);
+  212 |       await resourcesPage.fillFlowRate('100');
+  213 |       await resourcesPage.saveStation();
+  214 |       await resourcesPage.reloadStations();
+  215 |       const countWithStation = await resourcesPage.stationCount();
+  216 |       await resourcesPage.searchStations('test');
+  217 |       await resourcesPage.expectSearchFilteredToSingle(name);
+  218 | 
+  219 |       // Cancel path: a confirm() dialog (Cancel + OK) with the delete message;
+  220 |       // clicking Cancel closes it and keeps the station.
+  221 |       const cancelled = await resourcesPage.clickDeleteStation(name, 'dismiss');
+  222 |       expect(cancelled.type).toBe('confirm'); // confirm => OK + Cancel buttons
+  223 |       expect(cancelled.message).toBe(DELETE_MSG);
+  224 |       await resourcesPage.expectStationVisible(name);
+  225 | 
+  226 |       // OK path: same dialog; clicking OK closes it and removes the station.
+  227 |       const accepted = await resourcesPage.clickDeleteStation(name, 'accept');
+  228 |       expect(accepted.type).toBe('confirm');
+  229 |       expect(accepted.message).toBe(DELETE_MSG);
+  230 |       await resourcesPage.expectStationGone(name);
+  231 | 
+  232 |       // Searching "test" now matches nothing.
+  233 |       await resourcesPage.searchStations('test');
+  234 |       await resourcesPage.expectNoStationsMatch();
+  235 | 
+  236 |       // Tab count decremented by 1 (badge refreshes only on reload).
+  237 |       await resourcesPage.reloadStations();
+  238 |       expect(await resourcesPage.stationCount()).toBe(countWithStation - 1);
+  239 |     } finally {
+  240 |       // Safety net: if the OK path didn't run (early failure), remove the station.
+  241 |       await resourcesPage.reloadStations();
+  242 |       await resourcesPage.searchStations(name);
+  243 |       if ((await resourcesPage.cardCount(name)) > 0) {
+  244 |         await resourcesPage.deleteStationByName(name);
+  245 |       }
+  246 |     }
+  247 |   });
+  248 | 
+  249 |   /**
+  250 |    * KNOWN BACKEND BUG - status is dropped on write.
+  251 |    *
+  252 |    * Marked test.fail(): it asserts the CORRECT behaviour (a chosen Status
+  253 |    * persists), which the backend does not yet do, so it is EXPECTED to fail and
+  254 |    * keeps the suite green. When the API is fixed it will pass unexpectedly and
+  255 |    * Playwright will flag it ("expected to fail but passed") - at which point
+  256 |    * remove test.fail() and fold the assertion into the main flow.
+  257 |    *
+  258 |    * Evidence + full report: docs/BUG-water-station-status.md
+  259 |    */
+  260 |   test(
+  261 |     'Status persists on create (BLOCKED: backend drops `status` on write)',
+  262 |     {
+  263 |       annotation: [
+  264 |         { type: 'bug', description: 'Water-fill-stations API ignores `status` on create + update.' },
+  265 |         { type: 'report', description: 'docs/BUG-water-station-status.md' },
+  266 |       ],
+  267 |       tag: '@backend-bug',
+  268 |     },
+  269 |     async ({ page, resourcesPage }) => {
+  270 |       test.fail(); // remove once the backend persists `status`
+  271 | 
+  272 |       await page.goto('/');
+  273 |       await resourcesPage.navigateFromSidebar();
+  274 |       await resourcesPage.expectLoaded();
+  275 |       await resourcesPage.selectWaterStationsTab();
+  276 | 
+  277 |       const name = `bug status station ${Date.now()}`;
+  278 | 
+  279 |       try {
+  280 |         await resourcesPage.openAddStationForm();
+  281 |         await resourcesPage.fillName(name);
+  282 |         await resourcesPage.fillFlowRate('120');
+  283 | 
+  284 |         // Choose a non-default status; the control reflects it correctly...
+  285 |         await resourcesPage.selectStatus('Maintenance');
+  286 |         expect(await resourcesPage.statusValue()).toBe('maintenance');
+  287 | 
+  288 |         await resourcesPage.saveStation();
+  289 | 
+  290 |         // ...but after a real reload + read-back the chosen status should persist.
+  291 |         // It does NOT today (the station comes back "active") - this is the bug.
+  292 |         await resourcesPage.reloadStations();
+  293 |         await resourcesPage.searchStations(name);
+  294 |         await resourcesPage.openEditStationByName(name);
+> 295 |         expect(await resourcesPage.statusValue()).toBe('maintenance');
+      |                                                   ^ Error: expect(received).toBe(expected) // Object.is equality
+  296 |         await resourcesPage.cancelForm();
+  297 |       } finally {
+  298 |         await resourcesPage.reloadStations();
+  299 |         await resourcesPage.searchStations(name);
+  300 |         if ((await resourcesPage.cardCount(name)) > 0) {
+  301 |           await resourcesPage.deleteStationByName(name);
+  302 |         }
+  303 |       }
+  304 |     },
+  305 |   );
+  306 | });
+  307 | 
+```
