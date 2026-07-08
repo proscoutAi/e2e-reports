@@ -1,0 +1,495 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/greenhouse-create.spec.ts >> Resources -> Greenhouses (Create) >> Geofence & Paths: draw geofence, main path, and crossing lines with controls
+- Location: tests/ui/greenhouse-create.spec.ts:113:3
+
+# Error details
+
+```
+Error: The Calculated Area panel does not show the same value (52 m²) as the Area Size field.
+
+expect(locator).toBeVisible() failed
+
+Locator: getByText(/\b52\s*m²/).first()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - The Calculated Area panel does not show the same value (52 m²) as the Area Size field. with timeout 5000ms
+  - waiting for getByText(/\b52\s*m²/).first()
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /Dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /Planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /Activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /Settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "Users":
+      - /url: /Users
+      - img
+      - text: Users
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - heading "Resources" [level=1]:
+    - img
+    - text: Resources
+  - tablist:
+    - tab "Greenhouses 6" [selected]:
+      - img
+      - text: Greenhouses 6
+    - tab "Water Stations 4":
+      - img
+      - text: Water Stations 4
+    - tab "Sprayers 70":
+      - img
+      - text: Sprayers 70
+    - tab "Pesticides 6":
+      - img
+      - text: Pesticides 6
+    - tab "Personnel 1":
+      - img
+      - text: Personnel 1
+  - tabpanel "Greenhouses 6":
+    - heading "Greenhouse Management" [level=3]
+    - button "List View":
+      - img
+      - text: List View
+    - button "Map View":
+      - img
+      - text: Map View
+    - button "Export":
+      - img
+      - text: Export
+    - button "Add Greenhouse" [disabled]:
+      - img
+      - text: Add Greenhouse
+    - text: Add New Greenhouse Greenhouse Name *
+    - textbox "Greenhouse Name *":
+      - /placeholder: e.g., Greenhouse A1
+    - text: Area Size (m²) *
+    - spinbutton "Area Size (m²) *": "56"
+    - paragraph: Auto-filled from the geofence. You can adjust it manually.
+    - text: Location
+    - textbox "Location":
+      - /placeholder: Section B, North Wing
+    - text: Crop Type
+    - textbox "Crop Type":
+      - /placeholder: Tomatoes
+    - text: Planting Date
+    - textbox "Planting Date"
+    - text: Number of Rows
+    - spinbutton "Number of Rows"
+    - text: Status
+    - combobox: Active
+    - text: Geofence & Paths *
+    - paragraph: Draw the greenhouse boundaries and the main path on the map. The area will be calculated automatically.
+    - button "Draw Geofence":
+      - img
+      - text: Draw Geofence
+    - button "Draw Main Path":
+      - img
+      - text: Draw Main Path
+    - button "Draw Crossing Lines":
+      - img
+      - text: Draw Crossing Lines
+    - textbox "Search for city, state, or country..."
+    - button [disabled]:
+      - img
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - menubar:
+      - menuitemradio "Show street map": Map
+      - menuitemradio "Show satellite imagery" [checked]: Satellite
+    - button "Toggle fullscreen view"
+    - button "Map camera controls"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.415477,34.991392&z=20&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - text: Imagery ©2026 Airbus
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - link "Report a map error (opens in new tab)":
+      - /url: https://www.google.com/maps/@32.4154766,34.9913917,20z/data=!3m1!1e3!10m1!1e1!12b1?source=apiv3&rapsrc=apiv3
+      - text: Report a map error
+    - text: "Calculated Area: 56 m²"
+    - paragraph: Area calculated from geofence coordinates
+    - button "Undo Last Point (5)":
+      - img
+      - text: Undo Last Point (5)
+    - button "Clear Geofence":
+      - img
+      - text: Clear Geofence
+    - paragraph: • Use the toggle buttons to switch between drawing the geofence, main path, and crossing lines.
+    - paragraph: • Click on the satellite map to draw points for the selected layer.
+    - paragraph: • Geofence requires at least 3 points. Main path requires at least 2 points.
+    - paragraph: • Each crossing line is 2 points; you can draw multiple lines.
+    - paragraph: • The geofence polygon will automatically close when you have 3+ points.
+    - paragraph: • Area is calculated automatically from the geofence coordinates.
+    - button "Save Greenhouse":
+      - img
+      - text: Save Greenhouse
+    - button "Cancel":
+      - img
+      - text: Cancel
+    - img
+    - textbox "Search greenhouses by name, location, crop type, or status..."
+    - combobox:
+      - img
+      - text: Name
+    - button "↑"
+    - img
+    - heading "Hod Hasharon - Weizman" [level=4]
+    - text: 2505 m² 00
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.166583,34.903697&z=15&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+    - img
+    - heading "Ronen Greenhous 1" [level=4]
+    - text: 8965 m² • 60 Rows • Tomatoes
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.240042,34.907429&z=14&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+    - img
+    - heading "Ronen Greenhouse 2" [level=4]
+    - text: 12847 m² 00
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.239075,34.907042&z=13&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+    - img
+    - heading "Ronen Greenhouse 3" [level=4]
+    - text: 11271 m² 00
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.240437,34.905955&z=13&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+    - img
+    - heading "Ronen near house" [level=4]
+    - text: 10442 m² 00
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=32.23912,34.908079&z=13&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+    - img
+    - heading "הבית של זיו" [level=4]
+    - text: 7948 m² 00
+    - button "Keyboard shortcuts"
+    - region "Map"
+    - link "Open this area in Google Maps (opens a new window)":
+      - /url: https://maps.google.com/maps?ll=31.890253,35.012813&z=13&t=k&hl=en&gl=US&mapclient=apiv3
+      - img "Google"
+    - button "Keyboard shortcuts"
+    - button "Map Data"
+    - link "Terms (opens in new tab)":
+      - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+      - text: Terms
+    - text: Active
+    - button "Edit Greenhouse":
+      - img
+    - button "Delete greenhouse":
+      - img
+```
+
+# Test source
+
+```ts
+  447 |     return this.areaValue();
+  448 |   }
+  449 | 
+  450 |   // ---- Geofence & Paths drawing (Step 5a) --------------------------------
+  451 | 
+  452 |   /**
+  453 |    * The Geofence & Paths section: heading, helper text, the three drawing-mode
+  454 |    * buttons, and the validation hint.
+  455 |    */
+  456 |   async expectGeofenceSection(): Promise<void> {
+  457 |     await expect(this.geofenceSectionHeading.first(), 'Add Greenhouse form is missing the "Geofence & Paths" section heading.').toBeVisible();
+  458 |     await expect(this.geofenceHelperText, 'Geofence section is missing its helper text.').toBeVisible();
+  459 |     await expect(this.drawGeofenceButton, 'Geofence section is missing the "Draw Geofence" button.').toBeVisible();
+  460 |     await expect(this.drawMainPathButton, 'Geofence section is missing the "Draw Main Path" button.').toBeVisible();
+  461 |     await expect(this.drawCrossingLinesButton, 'Geofence section is missing the "Draw Crossing Lines" button.').toBeVisible();
+  462 |     await expect(this.geofenceValidationHint.first(), 'Geofence section is missing its validation hint.').toBeVisible();
+  463 |   }
+  464 | 
+  465 |   async clickDrawGeofence(): Promise<void> {
+  466 |     await this.drawGeofenceButton.click();
+  467 |     await this.page.waitForTimeout(400); // let the map enter the new drawing mode
+  468 |   }
+  469 | 
+  470 |   async clickDrawMainPath(): Promise<void> {
+  471 |     await this.drawMainPathButton.click();
+  472 |     await this.page.waitForTimeout(400);
+  473 |   }
+  474 | 
+  475 |   async clickDrawCrossingLines(): Promise<void> {
+  476 |     await this.drawCrossingLinesButton.click();
+  477 |     await this.page.waitForTimeout(400);
+  478 |   }
+  479 | 
+  480 |   /**
+  481 |    * Assert the given drawing mode is active. Active modes get a solid colour
+  482 |    * fill (Geofence=emerald, Main Path=orange, Crossing Lines=blue); inactive
+  483 |    * modes are outline buttons. Modes are mutually exclusive.
+  484 |    */
+  485 |   async expectDrawModeActive(mode: 'geofence' | 'path' | 'crossing'): Promise<void> {
+  486 |     const map = {
+  487 |       geofence: [this.drawGeofenceButton, /bg-emerald-600/] as const,
+  488 |       path: [this.drawMainPathButton, /bg-orange-500/] as const,
+  489 |       crossing: [this.drawCrossingLinesButton, /bg-blue-500/] as const,
+  490 |     };
+  491 |     const [button, colorClass] = map[mode];
+  492 |     await expect(button, `Drawing mode "${mode}" is not active (its button is not highlighted).`).toHaveClass(colorClass);
+  493 |   }
+  494 | 
+  495 |   /** Pixel points spread around the map centre (for a non-degenerate polygon). */
+  496 |   private polygonPoints(box: { x: number; y: number; width: number; height: number }, count: number): Array<[number, number]> {
+  497 |     const cx = box.x + box.width / 2;
+  498 |     const cy = box.y + box.height / 2;
+  499 |     const r = Math.min(box.width, box.height) * 0.16;
+  500 |     const points: Array<[number, number]> = [];
+  501 |     for (let i = 0; i < count; i++) {
+  502 |       const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+  503 |       points.push([cx + r * Math.cos(angle), cy + r * Math.sin(angle)]);
+  504 |     }
+  505 |     return points;
+  506 |   }
+  507 | 
+  508 |   /** Click `count` points (>=3) forming a closed boundary on the map. */
+  509 |   async drawBoundaryPoints(count = 4): Promise<void> {
+  510 |     const box = await this.geofenceMapBox();
+  511 |     const points = this.polygonPoints(box, count);
+  512 |     for (const [x, y] of points) {
+  513 |       await this.page.mouse.click(x, y);
+  514 |       await this.page.waitForTimeout(300);
+  515 |     }
+  516 |     await this.page.mouse.click(points[0][0], points[0][1]); // close the polygon
+  517 |   }
+  518 | 
+  519 |   /**
+  520 |    * Click `count` points (>=2) along a horizontal line on the map (path /
+  521 |    * crossing line). `yFraction` selects the vertical band so successive lines
+  522 |    * don't overlap each other or the central geofence (e.g. 0.3 = upper band for
+  523 |    * the main path, 0.7 = lower band for a crossing line).
+  524 |    */
+  525 |   async drawLinePoints(count = 2, yFraction = 0.5): Promise<void> {
+  526 |     const box = await this.geofenceMapBox();
+  527 |     const y = box.y + box.height * yFraction;
+  528 |     for (let i = 0; i < count; i++) {
+  529 |       const t = count === 1 ? 0.5 : i / (count - 1);
+  530 |       await this.page.mouse.click(box.x + box.width * (0.3 + 0.4 * t), y);
+  531 |       await this.page.waitForTimeout(300);
+  532 |     }
+  533 |   }
+  534 | 
+  535 |   /**
+  536 |    * After drawing a geofence: assert the Calculated Area panel shows a positive
+  537 |    * "<n> m²" with the note "Area calculated from geofence coordinates", and that
+  538 |    * the Area Size field auto-updated to the same value. Returns the area.
+  539 |    */
+  540 |   async expectCalculatedArea(): Promise<string> {
+  541 |     await expect(this.areaSizeInput, 'Area Size field is still empty - the geofence did not auto-calculate an area.').not.toHaveValue('', { timeout: 10_000 });
+  542 |     await expect(this.page.getByText(/Calculated Area:/), 'Missing the "Calculated Area:" panel after drawing the geofence.').toBeVisible();
+  543 |     await expect(this.calculatedAreaNote, 'Missing the "Area calculated from geofence coordinates" note.').toBeVisible();
+  544 |     const area = await this.areaValue();
+  545 |     expect(Number(area), `Calculated area should be positive but was "${area}".`).toBeGreaterThan(0);
+  546 |     // The panel shows the same number the Area Size field holds.
+> 547 |     await expect(this.page.getByText(new RegExp(`\\b${area}\\s*m²`)).first(), `The Calculated Area panel does not show the same value (${area} m²) as the Area Size field.`).toBeVisible();
+      |                                                                                                                                                                              ^ Error: The Calculated Area panel does not show the same value (52 m²) as the Area Size field.
+  548 |     return area;
+  549 |   }
+  550 | 
+  551 |   /** The N in the "Undo Last Point (N)" control. */
+  552 |   async undoPointCount(): Promise<number> {
+  553 |     const text = await this.undoLastPointButton.innerText();
+  554 |     return Number(text.match(/\((\d+)\)/)?.[1] ?? '0');
+  555 |   }
+  556 | 
+  557 |   async clickUndoLastPoint(): Promise<void> {
+  558 |     await this.undoLastPointButton.click();
+  559 |   }
+  560 | 
+  561 |   /** Click a contextual Clear control ("Clear Geofence/Main Path/Crossing Lines"). */
+  562 |   async clickClear(label: string): Promise<void> {
+  563 |     await this.page.getByRole('button', { name: label }).click();
+  564 |   }
+  565 | 
+  566 |   /**
+  567 |    * Submit the form (Step 5b). Scrolls the Save button into view, clicks it,
+  568 |    * and asserts the success indication: the form closes (Save/Cancel and the
+  569 |    * field inputs disappear) and the view returns to the Greenhouses list (the
+  570 |    * Add Greenhouse button is visible again, with the cards behind it).
+  571 |    */
+  572 |   async saveGreenhouse(): Promise<void> {
+  573 |     await this.saveButton.scrollIntoViewIfNeeded();
+  574 |     await this.saveButton.click();
+  575 |     await expect(this.saveButton, 'Save Greenhouse did not complete - the Save button is still showing (the save failed or the form did not close).').toBeHidden({ timeout: 15_000 });
+  576 |     await expect(this.nameInput, 'Add Greenhouse form did not close after saving (Name field still visible).').toBeHidden();
+  577 |     await expect(this.addGreenhouseButton, 'Did not return to the Greenhouses list after saving ("Add Greenhouse" button missing).').toBeVisible();
+  578 |     await expect(this.cards.first(), 'Greenhouses list is empty after saving.').toBeVisible();
+  579 |   }
+  580 | 
+  581 |   async cancelForm(): Promise<void> {
+  582 |     await this.cancelButton.click();
+  583 |     await expect(this.nameInput, 'Form did not close after clicking Cancel (Name field still visible).').toBeHidden({ timeout: 10_000 });
+  584 |   }
+  585 | 
+  586 |   /** Type into the greenhouse search field (filters the card list). */
+  587 |   async searchFor(term: string): Promise<void> {
+  588 |     await this.searchField.fill(term);
+  589 |   }
+  590 | 
+  591 |   /** The greenhouse card whose text contains `name`. */
+  592 |   private cardByName(name: string): Locator {
+  593 |     return this.cards.filter({ hasText: name }).first();
+  594 |   }
+  595 | 
+  596 |   /** How many cards currently match `name` (0 once deleted/not created). */
+  597 |   async cardCount(name: string): Promise<number> {
+  598 |     return this.cards.filter({ hasText: name }).count();
+  599 |   }
+  600 | 
+  601 |   /**
+  602 |    * Assert the named greenhouse card shows the given fields. Area and rows are
+  603 |    * always checked; location and crop type are checked when supplied (they only
+  604 |    * render on the card when set). Also asserts the structural row fields (Step 6):
+  605 |    * a status badge, a map thumbnail (showing the drawn geofence), and the Edit/
+  606 |    * Delete action buttons.
+  607 |    */
+  608 |   async expectGreenhouseCard(
+  609 |     name: string,
+  610 |     opts: { area: string; rows: string; location?: string; cropType?: string; status?: string },
+  611 |   ): Promise<void> {
+  612 |     const card = this.cardByName(name);
+  613 |     await expect(card, `Greenhouse card "${name}" not found in the list.`).toBeVisible({ timeout: 10_000 });
+  614 |     const areaInt = Math.round(Number(opts.area));
+  615 |     await expect(card, `Greenhouse "${name}" card does not show its area (${areaInt} m²).`).toContainText(new RegExp(`${areaInt}\\s*m²`));
+  616 |     await expect(card, `Greenhouse "${name}" card does not show "${opts.rows} Rows".`).toContainText(new RegExp(`${opts.rows}\\s*Rows`));
+  617 |     if (opts.location) await expect(card, `Greenhouse "${name}" card does not show location "${opts.location}".`).toContainText(opts.location);
+  618 |     if (opts.cropType) await expect(card, `Greenhouse "${name}" card does not show crop type "${opts.cropType}".`).toContainText(opts.cropType);
+  619 |     await expect(card.getByText(opts.status ?? 'Active', { exact: true }), `Greenhouse "${name}" card does not show the "${opts.status ?? 'Active'}" status badge.`).toBeVisible();
+  620 |     await expect(card.locator('div.h-24.w-48'), `Greenhouse "${name}" card is missing its map thumbnail.`).toBeVisible();
+  621 |     await expect(card.getByRole('button', { name: 'Edit Greenhouse' }), `Greenhouse "${name}" card is missing its "Edit Greenhouse" button.`).toBeVisible();
+  622 |     await expect(card.getByRole('button', { name: 'Delete greenhouse' }), `Greenhouse "${name}" card is missing its "Delete greenhouse" button.`).toBeVisible();
+  623 |   }
+  624 | 
+  625 |   /** Open the Edit form for the named greenhouse (waits for the Name field). */
+  626 |   async openEditByName(name: string): Promise<void> {
+  627 |     await this.cardByName(name).getByRole('button', { name: 'Edit Greenhouse' }).click();
+  628 |     await expect(this.nameInput, `Edit Greenhouse form did not open for "${name}" (Name field not visible).`).toBeVisible({ timeout: 10_000 });
+  629 |   }
+  630 | 
+  631 |   /**
+  632 |    * Delete the named greenhouse via its trash button. Deletion is guarded by a
+  633 |    * NATIVE browser confirm() dialog, so we accept it via a one-shot handler.
+  634 |    */
+  635 |   async deleteByName(name: string): Promise<void> {
+  636 |     this.page.once('dialog', (dialog) => dialog.accept());
+  637 |     await this.cardByName(name).getByRole('button', { name: 'Delete greenhouse' }).click();
+  638 |     await expect(this.cards.filter({ hasText: name }), `Greenhouse "${name}" was not removed from the list after deleting it.`).toHaveCount(0, { timeout: 10_000 });
+  639 |   }
+  640 | 
+  641 |   // ---- Water Stations (Water Fill Station Management) --------------------
+  642 |   //
+  643 |   // Confirmed against the live DOM (Ronen / staging-bar2 account):
+  644 |   //  - the Water Stations resource tab swaps the sub-heading to "Water Fill
+  645 |   //    Station Management" and replaces Greenhouses' List/Map toggle + Export
+  646 |   //    with a single "Add Station" button; search + the Name/↑ sort control stay.
+  647 |   //  - each station renders as the same card shell (div.rounded-xl.border.bg-card)
+```

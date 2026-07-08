@@ -1,0 +1,260 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/greenhouse-create.spec.ts >> Resources -> Greenhouses (Create) >> Create greenhouse: fill all fields, assert behaviour, persist, and clean up
+- Location: tests/ui/greenhouse-create.spec.ts:26:3
+
+# Error details
+
+```
+Error: Greenhouse "test greenhouse 1783528127801" card does not show its area (119 m²).
+
+expect(locator).toContainText(expected) failed
+
+Locator: locator('div.rounded-xl.border.bg-card').filter({ hasText: 'test greenhouse 1783528127801' }).first()
+Expected pattern: /119\s*m²/
+Received string:  "test greenhouse 1783528127801141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasil←Move left→Move right↑Move up↓Move down+Zoom in-Zoom outHomeJump left by 75%EndJump right by 75%Page UpJump up by 75%Page DownJump down by 75%Map DataImagery ©2026 Airbus, CNES / Airbus, Maxar TechnologiesImagery ©2026 Airbus, CNES / Airbus, Maxar Technologies100 m Click to toggle between metric and imperial unitsTermsActive"
+Timeout: 5000ms
+
+Call log:
+  - Greenhouse "test greenhouse 1783528127801" card does not show its area (119 m²). with timeout 5000ms
+  - waiting for locator('div.rounded-xl.border.bg-card').filter({ hasText: 'test greenhouse 1783528127801' }).first()
+    6 × locator resolved to <div class="rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow">…</div>
+      - unexpected value "test greenhouse 1783528127801141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasilActive"
+    7 × locator resolved to <div class="rounded-xl border bg-card text-card-foreground shadow hover:shadow-md transition-shadow">…</div>
+      - unexpected value "test greenhouse 1783528127801141 m²• 100 Rows100 Rows• Top area testTop area test• BasilBasil←Move left→Move right↑Move up↓Move down+Zoom in-Zoom outHomeJump left by 75%EndJump right by 75%Page UpJump up by 75%Page DownJump down by 75%Map DataImagery ©2026 Airbus, CNES / Airbus, Maxar TechnologiesImagery ©2026 Airbus, CNES / Airbus, Maxar Technologies100 m Click to toggle between metric and imperial unitsTermsActive"
+
+```
+
+```yaml
+- img
+- heading "test greenhouse 1783528127801" [level=4]
+- text: 141 m² • 100 Rows • Top area test • Basil
+- button "Keyboard shortcuts"
+- region "Map"
+- link "Open this area in Google Maps (opens a new window)":
+  - /url: https://maps.google.com/maps?ll=32.416524,34.979578&z=16&t=k&hl=en&gl=US&mapclient=apiv3
+  - img "Google"
+- button "Keyboard shortcuts"
+- button "Map Data"
+- link "Terms (opens in new tab)":
+  - /url: https://www.google.com/intl/en_US/help/terms_maps.html
+  - text: Terms
+- text: Active
+- button "Edit Greenhouse":
+  - img
+- button "Delete greenhouse":
+  - img
+```
+
+# Test source
+
+```ts
+  515 |     }
+  516 |     await this.page.mouse.click(points[0][0], points[0][1]); // close the polygon
+  517 |   }
+  518 | 
+  519 |   /**
+  520 |    * Click `count` points (>=2) along a horizontal line on the map (path /
+  521 |    * crossing line). `yFraction` selects the vertical band so successive lines
+  522 |    * don't overlap each other or the central geofence (e.g. 0.3 = upper band for
+  523 |    * the main path, 0.7 = lower band for a crossing line).
+  524 |    */
+  525 |   async drawLinePoints(count = 2, yFraction = 0.5): Promise<void> {
+  526 |     const box = await this.geofenceMapBox();
+  527 |     const y = box.y + box.height * yFraction;
+  528 |     for (let i = 0; i < count; i++) {
+  529 |       const t = count === 1 ? 0.5 : i / (count - 1);
+  530 |       await this.page.mouse.click(box.x + box.width * (0.3 + 0.4 * t), y);
+  531 |       await this.page.waitForTimeout(300);
+  532 |     }
+  533 |   }
+  534 | 
+  535 |   /**
+  536 |    * After drawing a geofence: assert the Calculated Area panel shows a positive
+  537 |    * "<n> m²" with the note "Area calculated from geofence coordinates", and that
+  538 |    * the Area Size field auto-updated to the same value. Returns the area.
+  539 |    */
+  540 |   async expectCalculatedArea(): Promise<string> {
+  541 |     await expect(this.areaSizeInput, 'Area Size field is still empty - the geofence did not auto-calculate an area.').not.toHaveValue('', { timeout: 10_000 });
+  542 |     await expect(this.page.getByText(/Calculated Area:/), 'Missing the "Calculated Area:" panel after drawing the geofence.').toBeVisible();
+  543 |     await expect(this.calculatedAreaNote, 'Missing the "Area calculated from geofence coordinates" note.').toBeVisible();
+  544 |     const area = await this.areaValue();
+  545 |     expect(Number(area), `Calculated area should be positive but was "${area}".`).toBeGreaterThan(0);
+  546 |     // The panel shows the same number the Area Size field holds.
+  547 |     await expect(this.page.getByText(new RegExp(`\\b${area}\\s*m²`)).first(), `The Calculated Area panel does not show the same value (${area} m²) as the Area Size field.`).toBeVisible();
+  548 |     return area;
+  549 |   }
+  550 | 
+  551 |   /** The N in the "Undo Last Point (N)" control. */
+  552 |   async undoPointCount(): Promise<number> {
+  553 |     const text = await this.undoLastPointButton.innerText();
+  554 |     return Number(text.match(/\((\d+)\)/)?.[1] ?? '0');
+  555 |   }
+  556 | 
+  557 |   async clickUndoLastPoint(): Promise<void> {
+  558 |     await this.undoLastPointButton.click();
+  559 |   }
+  560 | 
+  561 |   /** Click a contextual Clear control ("Clear Geofence/Main Path/Crossing Lines"). */
+  562 |   async clickClear(label: string): Promise<void> {
+  563 |     await this.page.getByRole('button', { name: label }).click();
+  564 |   }
+  565 | 
+  566 |   /**
+  567 |    * Submit the form (Step 5b). Scrolls the Save button into view, clicks it,
+  568 |    * and asserts the success indication: the form closes (Save/Cancel and the
+  569 |    * field inputs disappear) and the view returns to the Greenhouses list (the
+  570 |    * Add Greenhouse button is visible again, with the cards behind it).
+  571 |    */
+  572 |   async saveGreenhouse(): Promise<void> {
+  573 |     await this.saveButton.scrollIntoViewIfNeeded();
+  574 |     await this.saveButton.click();
+  575 |     await expect(this.saveButton, 'Save Greenhouse did not complete - the Save button is still showing (the save failed or the form did not close).').toBeHidden({ timeout: 15_000 });
+  576 |     await expect(this.nameInput, 'Add Greenhouse form did not close after saving (Name field still visible).').toBeHidden();
+  577 |     await expect(this.addGreenhouseButton, 'Did not return to the Greenhouses list after saving ("Add Greenhouse" button missing).').toBeVisible();
+  578 |     await expect(this.cards.first(), 'Greenhouses list is empty after saving.').toBeVisible();
+  579 |   }
+  580 | 
+  581 |   async cancelForm(): Promise<void> {
+  582 |     await this.cancelButton.click();
+  583 |     await expect(this.nameInput, 'Form did not close after clicking Cancel (Name field still visible).').toBeHidden({ timeout: 10_000 });
+  584 |   }
+  585 | 
+  586 |   /** Type into the greenhouse search field (filters the card list). */
+  587 |   async searchFor(term: string): Promise<void> {
+  588 |     await this.searchField.fill(term);
+  589 |   }
+  590 | 
+  591 |   /** The greenhouse card whose text contains `name`. */
+  592 |   private cardByName(name: string): Locator {
+  593 |     return this.cards.filter({ hasText: name }).first();
+  594 |   }
+  595 | 
+  596 |   /** How many cards currently match `name` (0 once deleted/not created). */
+  597 |   async cardCount(name: string): Promise<number> {
+  598 |     return this.cards.filter({ hasText: name }).count();
+  599 |   }
+  600 | 
+  601 |   /**
+  602 |    * Assert the named greenhouse card shows the given fields. Area and rows are
+  603 |    * always checked; location and crop type are checked when supplied (they only
+  604 |    * render on the card when set). Also asserts the structural row fields (Step 6):
+  605 |    * a status badge, a map thumbnail (showing the drawn geofence), and the Edit/
+  606 |    * Delete action buttons.
+  607 |    */
+  608 |   async expectGreenhouseCard(
+  609 |     name: string,
+  610 |     opts: { area: string; rows: string; location?: string; cropType?: string; status?: string },
+  611 |   ): Promise<void> {
+  612 |     const card = this.cardByName(name);
+  613 |     await expect(card, `Greenhouse card "${name}" not found in the list.`).toBeVisible({ timeout: 10_000 });
+  614 |     const areaInt = Math.round(Number(opts.area));
+> 615 |     await expect(card, `Greenhouse "${name}" card does not show its area (${areaInt} m²).`).toContainText(new RegExp(`${areaInt}\\s*m²`));
+      |                                                                                             ^ Error: Greenhouse "test greenhouse 1783528127801" card does not show its area (119 m²).
+  616 |     await expect(card, `Greenhouse "${name}" card does not show "${opts.rows} Rows".`).toContainText(new RegExp(`${opts.rows}\\s*Rows`));
+  617 |     if (opts.location) await expect(card, `Greenhouse "${name}" card does not show location "${opts.location}".`).toContainText(opts.location);
+  618 |     if (opts.cropType) await expect(card, `Greenhouse "${name}" card does not show crop type "${opts.cropType}".`).toContainText(opts.cropType);
+  619 |     await expect(card.getByText(opts.status ?? 'Active', { exact: true }), `Greenhouse "${name}" card does not show the "${opts.status ?? 'Active'}" status badge.`).toBeVisible();
+  620 |     await expect(card.locator('div.h-24.w-48'), `Greenhouse "${name}" card is missing its map thumbnail.`).toBeVisible();
+  621 |     await expect(card.getByRole('button', { name: 'Edit Greenhouse' }), `Greenhouse "${name}" card is missing its "Edit Greenhouse" button.`).toBeVisible();
+  622 |     await expect(card.getByRole('button', { name: 'Delete greenhouse' }), `Greenhouse "${name}" card is missing its "Delete greenhouse" button.`).toBeVisible();
+  623 |   }
+  624 | 
+  625 |   /** Open the Edit form for the named greenhouse (waits for the Name field). */
+  626 |   async openEditByName(name: string): Promise<void> {
+  627 |     await this.cardByName(name).getByRole('button', { name: 'Edit Greenhouse' }).click();
+  628 |     await expect(this.nameInput, `Edit Greenhouse form did not open for "${name}" (Name field not visible).`).toBeVisible({ timeout: 10_000 });
+  629 |   }
+  630 | 
+  631 |   /**
+  632 |    * Delete the named greenhouse via its trash button. Deletion is guarded by a
+  633 |    * NATIVE browser confirm() dialog, so we accept it via a one-shot handler.
+  634 |    */
+  635 |   async deleteByName(name: string): Promise<void> {
+  636 |     this.page.once('dialog', (dialog) => dialog.accept());
+  637 |     await this.cardByName(name).getByRole('button', { name: 'Delete greenhouse' }).click();
+  638 |     await expect(this.cards.filter({ hasText: name }), `Greenhouse "${name}" was not removed from the list after deleting it.`).toHaveCount(0, { timeout: 10_000 });
+  639 |   }
+  640 | 
+  641 |   // ---- Water Stations (Water Fill Station Management) --------------------
+  642 |   //
+  643 |   // Confirmed against the live DOM (Ronen / staging-bar2 account):
+  644 |   //  - the Water Stations resource tab swaps the sub-heading to "Water Fill
+  645 |   //    Station Management" and replaces Greenhouses' List/Map toggle + Export
+  646 |   //    with a single "Add Station" button; search + the Name/↑ sort control stay.
+  647 |   //  - each station renders as the same card shell (div.rounded-xl.border.bg-card)
+  648 |   //    with a droplets icon (svg.lucide-droplets), an <h4> name, a "Flow Rate:
+  649 |   //    <n> L/min" line, an optional location, an italic notes line, a map
+  650 |   //    thumbnail (div.h-24.w-48), a status badge, and icon buttons titled
+  651 |   //    "Edit station" / "Delete station".
+  652 |   //  - the Add Station form fields are #name (required), #flow_rate (required),
+  653 |   //    #location, the Status <select> (Active/Inactive/Maintenance, default
+  654 |   //    Active), #notes, and an OPTIONAL map marker ("Clear Point"). Save reads
+  655 |   //    "Save Station"; delete is guarded by a native confirm() dialog.
+  656 |   //  - status on write: a backend bug used to drop `status` on POST/PUT (always
+  657 |   //    stored ACTIVE; full evidence in docs/BUG-water-station-status.md). FIXED
+  658 |   //    server-side, verified 2026-07-07 - the create spec's "Status persists on
+  659 |   //    create" test asserts persistence and guards against regression.
+  660 | 
+  661 |   /** Select the Water Stations tab; waits for it to activate + its heading. */
+  662 |   async selectWaterStationsTab(): Promise<void> {
+  663 |     await this.tab('Water Stations').click();
+  664 |     await expect(this.tab('Water Stations'), 'Water Stations tab did not become selected after clicking it.').toHaveAttribute('aria-selected', 'true');
+  665 |     await expect(this.waterStationMgmtHeading, 'Water Stations view did not load ("Water Fill Station Management" heading missing).').toBeVisible({ timeout: 10_000 });
+  666 |   }
+  667 | 
+  668 |   /** Water Stations view loaded: tab active + "Water Fill Station Management". */
+  669 |   async expectWaterStationsLoaded(): Promise<void> {
+  670 |     await expect(this.tab('Water Stations'), 'Water Stations tab is not the selected tab.').toHaveAttribute('aria-selected', 'true');
+  671 |     await expect(this.waterStationMgmtHeading, 'The "Water Fill Station Management" heading is not visible.').toBeVisible();
+  672 |   }
+  673 | 
+  674 |   /**
+  675 |    * The whole Water Stations CRUD stays on /settings - unlike other resource
+  676 |    * sections it never routes to a separate detail page, so every create/edit/
+  677 |    * delete assertion is scoped to this one page. Callers assert this at the
+  678 |    * transitions (open form, save) where a detail-page navigation might occur.
+  679 |    */
+  680 |   async expectStillOnSettings(): Promise<void> {
+  681 |     await expect(this.page, 'Expected to stay on the Resources page (/settings) - the action navigated away unexpectedly.').toHaveURL(/\/settings/i);
+  682 |   }
+  683 | 
+  684 |   /** Add Station button, the station search field, and the sort control. */
+  685 |   async expectWaterStationsControls(): Promise<void> {
+  686 |     await expect(
+  687 |       this.addStationButton,
+  688 |       "'Add Station' button not found - the Water Stations view did not render.",
+  689 |     ).toBeVisible();
+  690 |     await expect(
+  691 |       this.stationSearchField,
+  692 |       'Water Stations search box is missing - the list controls did not render. ' +
+  693 |         'The account most likely has 0 water stations, so the page is showing the ' +
+  694 |         '"No Water Stations Found" empty state instead of the list.',
+  695 |     ).toBeEditable();
+  696 |     await expect(
+  697 |       this.stationSearchField,
+  698 |       'Water Stations search box has the wrong placeholder text.',
+  699 |     ).toHaveAttribute('placeholder', ResourcesPage.STATION_SEARCH_PLACEHOLDER);
+  700 |     await expect(
+  701 |       this.sortLabel.first(),
+  702 |       'Water Stations sort label ("Name") not found - the list controls did not render.',
+  703 |     ).toBeVisible();
+  704 |     await expect(
+  705 |       this.sortDirectionToggle,
+  706 |       'Water Stations sort direction toggle not found - the list controls did not render.',
+  707 |     ).toBeVisible();
+  708 |   }
+  709 | 
+  710 |   /**
+  711 |    * Spot-check the first `count` station cards for the structural fields a row
+  712 |    * should expose: droplets icon, name, "Flow Rate: <n> L/min", a map thumbnail,
+  713 |    * and the Edit/Delete action buttons.
+  714 |    */
+  715 |   async expectStationCardFields(count = 1): Promise<void> {
+```
