@@ -1,0 +1,302 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/planning.spec.ts >> Planning >> Planned Dates calendar: multi-select creates chips, counter updates, chips have remove buttons
+- Location: tests/ui/planning.spec.ts:91:3
+
+# Error details
+
+```
+Error: The form does not show "1 dates selected".
+
+expect(locator).toContainText(expected) failed
+
+Locator: locator('main')
+Expected substring: "1 dates selected"
+Received string:    "Toggle SidebarDashBarChange languageAYCreate Spray ActivityCreate Spray ActivityGreenhouses *Select greenhouse(s)Select Planned Dates *Sep 15, 2026Assign ToSelect personnel...SprayersSelect sprayers...Planned Water (L)Est. FillsPesticides & Dosage *Add PesticideNo pesticides selectedClick Add Pesticide to get startedNumber of RowsAllAllHalfOther0 RowsPlanned TimeNotesRecurrenceNo RecurrenceNo RecurrenceDailyWeeklyMonthlySchedule ActivityPrintTo save this planning, please fill: Greenhouse, Pesticide.Cost EstimateWater--PesticidesNo pesticides selectedRecent ActivitiesHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateRonen Greenhous 1beta3Jul 15ScheduledClick to use templateHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateRonen Greenhous 1beta3Jul 15ScheduledClick to use template"
+Timeout: 5000ms
+
+Call log:
+  - The form does not show "1 dates selected". with timeout 5000ms
+  - waiting for locator('main')
+    14 × locator resolved to <main class="flex-1 flex flex-col max-w-full overflow-x-hidden">…</main>
+       - unexpected value "Toggle SidebarDashBarChange languageAYCreate Spray ActivityCreate Spray ActivityGreenhouses *Select greenhouse(s)Select Planned Dates *Sep 15, 2026Assign ToSelect personnel...SprayersSelect sprayers...Planned Water (L)Est. FillsPesticides & Dosage *Add PesticideNo pesticides selectedClick Add Pesticide to get startedNumber of RowsAllAllHalfOther0 RowsPlanned TimeNotesRecurrenceNo RecurrenceNo RecurrenceDailyWeeklyMonthlySchedule ActivityPrintTo save this planning, please fill: Greenhouse, Pesticide.Cost EstimateWater--PesticidesNo pesticides selectedRecent ActivitiesHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateRonen Greenhous 1beta3Jul 15ScheduledClick to use templateHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateHod Hasharon - Weizmanbeta3Jul 15ScheduledClick to use templateRonen Greenhous 1beta3Jul 15ScheduledClick to use template"
+
+```
+
+```yaml
+- main:
+  - heading "Create Spray Activity" [level=1]:
+    - img
+    - text: Create Spray Activity
+  - text: Create Spray Activity Greenhouses *
+  - button "Greenhouses *": Select greenhouse(s)
+  - text: Select Planned Dates *
+  - button "Sep 15, 2026" [expanded]:
+    - img
+    - text: Sep 15, 2026
+    - button:
+      - img
+  - text: Assign To
+  - button "Select personnel..."
+  - text: Sprayers
+  - button "Select sprayers..."
+  - text: Planned Water (L)
+  - spinbutton "Planned Water (L)"
+  - text: Est. Fills
+  - spinbutton "Est. Fills"
+  - text: Pesticides & Dosage *
+  - button "Add Pesticide":
+    - img
+    - text: Add Pesticide
+  - img
+  - paragraph: No pesticides selected
+  - paragraph: Click Add Pesticide to get started
+  - text: Number of Rows
+  - combobox: All
+  - text: 0 Rows Planned Time
+  - textbox "Planned Time": 09:00
+  - text: Notes
+  - textbox "Notes":
+    - /placeholder: Additional notes or special instructions...
+  - text: Recurrence
+  - combobox: No Recurrence
+  - button "Schedule Activity" [disabled]:
+    - img
+    - text: Schedule Activity
+  - button "Print":
+    - img
+    - text: Print
+  - paragraph: "To save this planning, please fill: Greenhouse, Pesticide."
+  - img
+  - text: Cost Estimate
+  - img
+  - text: Water --
+  - img
+  - text: Pesticides
+  - paragraph: No pesticides selected
+  - img
+  - text: Recent Activities
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Ronen Greenhous 1" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Ronen Greenhous 1" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+```
+
+# Test source
+
+```ts
+  624 | 
+  625 |   /**
+  626 |    * Asserts the Number of Rows select contains "All" plus at least one numeric
+  627 |    * row option. Native <select> options are always in the DOM — no need to open it.
+  628 |    */
+  629 |   async expectNumberOfRowsDropdownOptions(): Promise<void> {
+  630 |     const options = this.numberOfRowsButton.locator('option');
+  631 |     await expect(options.filter({ hasText: 'All' }), 'Number of Rows dropdown is missing its "All" option.').toHaveCount(1);
+  632 |     expect(await options.count(), 'Number of Rows dropdown should have "All" plus at least one numeric option.').toBeGreaterThan(1);
+  633 |   }
+  634 | 
+  635 |   /** A chip/badge showing the selected row count (e.g. "0 Rows") is visible near the field. */
+  636 |   async expectRowsChipVisible(text: string): Promise<void> {
+  637 |     await expect(this.main.getByText(text, { exact: false }), `Row-count badge "${text}" is not visible near the Number of Rows field.`).toBeVisible();
+  638 |   }
+  639 | 
+  640 |   /** Time input is present and editable. */
+  641 |   async expectPlannedTimeVisible(): Promise<void> {
+  642 |     await expect(this.plannedTimeInput, 'Planned Time field is not visible.').toBeVisible();
+  643 |     await expect(this.plannedTimeInput, 'Planned Time field is not editable.').toBeEditable();
+  644 |   }
+  645 | 
+  646 |   /**
+  647 |    * Planned Time opens pre-filled with a default HH:MM (e.g. "09:00") and is
+  648 |    * editable (Step 2e). Asserts the field carries a valid time value out of the box.
+  649 |    */
+  650 |   async expectPlannedTimeHasDefault(): Promise<void> {
+  651 |     await expect(this.plannedTimeInput, 'Planned Time field is not editable.').toBeEditable();
+  652 |     await expect(this.plannedTimeInput, 'Planned Time did not open pre-filled with a default HH:MM time.').toHaveValue(/^\d{2}:\d{2}$/);
+  653 |   }
+  654 | 
+  655 |   /** Current value of the Planned Time input. */
+  656 |   async plannedTimeValue(): Promise<string> {
+  657 |     return this.plannedTimeInput.inputValue();
+  658 |   }
+  659 | 
+  660 |   /** Fills the time input with a HH:MM value and asserts the input stores it. */
+  661 |   async fillAndVerifyPlannedTime(value: string): Promise<void> {
+  662 |     await this.plannedTimeInput.fill(value);
+  663 |     await this.plannedTimeInput.press('Tab');
+  664 |     await expect(this.plannedTimeInput, `Planned Time did not keep the entered value "${value}".`).toHaveValue(value);
+  665 |   }
+  666 | 
+  667 |   // ── Notes ────────────────────────────────────────────────────────────────
+  668 | 
+  669 |   /** Fills the Notes textarea with the given free text. */
+  670 |   async fillNotes(text: string): Promise<void> {
+  671 |     await this.notes.fill(text);
+  672 |   }
+  673 | 
+  674 |   /** Notes textarea holds exactly the text that was entered. */
+  675 |   async expectNotesValue(text: string): Promise<void> {
+  676 |     await expect(this.notes, `Notes field did not hold the entered text "${text}".`).toHaveValue(text);
+  677 |   }
+  678 | 
+  679 |   // ── Select Planned Dates ─────────────────────────────────────────────────
+  680 | 
+  681 |   /**
+  682 |    * Returns the calendar popover/dialog that opens after clicking the date button.
+  683 |    * Scoped to containers holding a <table> (calendar grid) to avoid matching
+  684 |    * the per-greenhouse settings table.
+  685 |    */
+  686 |   private calendarPanel(): Locator {
+  687 |     return this.page
+  688 |       .locator('[role="dialog"], [data-radix-popper-content-wrapper]')
+  689 |       .filter({ has: this.page.locator('table') })
+  690 |       .first();
+  691 |   }
+  692 | 
+  693 |   /**
+  694 |    * Opens the planned-dates calendar if it is not already visible.
+  695 |    * The multi-select calendar stays open after each pick, so this is idempotent.
+  696 |    */
+  697 |   async openPlannedDatesCalendar(): Promise<void> {
+  698 |     if (!(await this.calendarPanel().isVisible())) {
+  699 |       await this.selectPlannedDatesButton.click();
+  700 |     }
+  701 |     await expect(this.calendarPanel()).toBeVisible({ timeout: 5_000 });
+  702 |   }
+  703 | 
+  704 |   /**
+  705 |    * Clicks an enabled day button in the currently-visible calendar month.
+  706 |    * Uses exact-match regex so "9" does not click "29", and excludes the grid's
+  707 |    * adjacent-month overflow cells (react-day-picker marks them "day-outside") -
+  708 |    * e.g. July's grid also shows Jun 28-30, so "28" would otherwise match twice.
+  709 |    */
+  710 |   async selectCalendarDay(day: number): Promise<void> {
+  711 |     await this.calendarPanel()
+  712 |       .locator('button:not([disabled]):not(.day-outside)')
+  713 |       .filter({ hasText: new RegExp(`^${day}$`) })
+  714 |       .click();
+  715 |   }
+  716 | 
+  717 |   /** A date chip with the given text (e.g. "Jun 15, 2026") is visible in the form. */
+  718 |   async expectDateChipVisible(dateText: string): Promise<void> {
+  719 |     await expect(this.main.getByText(dateText), `Planned-date chip "${dateText}" did not appear after selecting it in the calendar.`).toBeVisible();
+  720 |   }
+  721 | 
+  722 |   /** The form shows "N dates selected" near the date field. */
+  723 |   async expectDatesSelectedCount(count: number): Promise<void> {
+> 724 |     await expect(this.main, `The form does not show "${count} dates selected".`).toContainText(`${count} dates selected`);
+      |                                                                                  ^ Error: The form does not show "1 dates selected".
+  725 |   }
+  726 | 
+  727 |   /**
+  728 |    * Asserts the chip for the given date contains a remove (×) button.
+  729 |    * Finds the smallest containing element that holds both the date text and a button.
+  730 |    */
+  731 |   async expectDateHasRemoveButton(dateText: string): Promise<void> {
+  732 |     const chip = this.main
+  733 |       .locator('*')
+  734 |       .filter({ hasText: new RegExp(dateText.replace(',', ',?')) })
+  735 |       .filter({ has: this.page.getByRole('button') })
+  736 |       .last();
+  737 |     await expect(chip.getByRole('button').first(), `Planned-date chip "${dateText}" has no remove (x) button.`).toBeVisible();
+  738 |   }
+  739 | 
+  740 |   // ── Recurrence ───────────────────────────────────────────────────────────
+  741 | 
+  742 |   /** Recurrence native select defaults to "No Recurrence". */
+  743 |   async expectRecurrenceDefault(): Promise<void> {
+  744 |     await expect(this.recurrenceSelect.locator('option:checked'), 'Recurrence should default to "No Recurrence".').toHaveText('No Recurrence');
+  745 |   }
+  746 | 
+  747 |   /**
+  748 |    * Recurrence select has "No Recurrence" plus at least one additional option.
+  749 |    * Native <select> options are always in the DOM — no need to open it.
+  750 |    */
+  751 |   async expectRecurrenceDropdownOptions(): Promise<void> {
+  752 |     const options = this.recurrenceSelect.locator('option');
+  753 |     await expect(options.filter({ hasText: 'No Recurrence' }), 'Recurrence dropdown is missing its "No Recurrence" option.').toHaveCount(1);
+  754 |     expect(await options.count(), 'Recurrence dropdown should have "No Recurrence" plus at least one more option.').toBeGreaterThan(1);
+  755 |   }
+  756 | 
+  757 |   // ── Cost Estimate – Step 4 ───────────────────────────────────────────────
+  758 | 
+  759 |   /**
+  760 |    * Asserts the water row in the Cost Estimate panel has an SVG icon alongside
+  761 |    * the volume text.  The ARIA tree shows the icon as `img` + `text: Water X L`
+  762 |    * as siblings, so we find the nearest element that contains both.
+  763 |    */
+  764 |   async expectCostEstimateWaterIcon(): Promise<void> {
+  765 |     const waterRow = this.costEstimatePanel
+  766 |       .locator('*')
+  767 |       .filter({ has: this.page.locator('svg'), hasText: /Water.*L/ })
+  768 |       .first();
+  769 |     await expect(waterRow, 'Cost Estimate water row is missing its icon (svg next to the "Water … L" text).').toBeVisible();
+  770 |   }
+  771 | 
+  772 |   /** Disclaimer text is visible somewhere in the main content area. */
+  773 |   async expectCostEstimateDisclaimerVisible(): Promise<void> {
+  774 |     await expect(
+  775 |       this.main.getByText(/Costs shown are estimates/, { exact: false }).first(),
+  776 |       'Cost Estimate disclaimer ("Costs shown are estimates …") is not visible.',
+  777 |     ).toBeVisible();
+  778 |   }
+  779 | 
+  780 |   // ── Recent Activities – Step 5 ───────────────────────────────────────────
+  781 | 
+  782 |   private get recentActivitiesPanel(): Locator {
+  783 |     return this.recentActivitiesLabel.locator(
+  784 |       'xpath=ancestor::div[contains(@class, "rounded-xl")][1]',
+  785 |     );
+  786 |   }
+  787 | 
+  788 |   /**
+  789 |    * SPEC (stakeholder, updated 2026-07-07 after the manual-execution feature
+  790 |    * shipped): the panel fetches only the FIRST activities page (10 newest),
+  791 |    * keeps items that have `planning` OR `summary` data, sorts by
+  792 |    * lastUpdated ?? createdAt ?? date, and shows the TOP 5 - effectively
+  793 |    * "latest 5 (of the first 10 fetched) with planning or summary data".
+  794 |    * Scheduled and Executed (Manual) activities QUALIFY (both carry planning
+  795 |    * data), so any status badge can appear. Clicking an item uses it as a
+  796 |    * template to pre-fill the planning form. An account with no qualifying
+  797 |    * activity in the newest 10 shows the "No recent activities found" state.
+  798 |    *
+  799 |    * Returns the number of template items (0 = legitimate empty state).
+  800 |    */
+  801 |   async expectRecentActivitiesSpecCompliant(): Promise<number> {
+  802 |     const panel = this.recentActivitiesPanel;
+  803 |     await expect(panel, 'Recent Activities panel is not visible.').toBeVisible();
+  804 |     // Wait for the async fetch to resolve: either template items or the empty state.
+  805 |     await expect(
+  806 |       panel.locator('h4').first().or(panel.getByText('No recent activities found')),
+  807 |       'Recent Activities rendered neither template items nor its empty state.',
+  808 |     ).toBeVisible({ timeout: 10_000 });
+  809 |     // The empty-state text also renders WHILE the fetch is in flight, so a fresh
+  810 |     // "No recent activities found" may still turn into items. Give the panel a
+  811 |     // settle window before trusting what we see (matches the map-settle waits
+  812 |     // used elsewhere in the suite).
+  813 |     await this.page.waitForTimeout(3_000);
+  814 |     const count = await panel.locator('h4').count();
+  815 |     expect(count, `Recent Activities shows ${count} items - the spec caps the list at 5.`).toBeLessThanOrEqual(5);
+  816 |     if (count > 0) {
+  817 |       // textContent concatenates adjacent nodes without spaces, so no leading \b before month.
+  818 |       await expect(panel, 'A Recent Activities item is missing its date.').toContainText(
+  819 |         /(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/,
+  820 |       );
+  821 |       await expect(
+  822 |         panel.getByText(/^(Scheduled|Completed|Executed(\s*\(Manual\))?)$/).first(),
+  823 |         'A Recent Activities item is missing its status badge.',
+  824 |       ).toBeVisible();
+```

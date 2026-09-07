@@ -1,0 +1,248 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/login.spec.ts >> Login >> Valid credentials sign in and land on the Daily Summary dashboard
+- Location: tests/ui/login.spec.ts:20:3
+
+# Error details
+
+```
+Error: Sidebar navigation link "Users" is missing.
+
+expect(locator).toBeVisible() failed
+
+Locator: getByRole('link', { name: 'Users', exact: true })
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Sidebar navigation link "Users" is missing. with timeout 5000ms
+  - waiting for getByRole('link', { name: 'Users', exact: true })
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /Dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /Planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /Activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /Settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "System Management":
+      - /url: /system-management
+      - img
+      - text: System Management
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - heading "Daily Summary" [level=1]
+  - text: Yesterday — 6 Sep 2026
+  - link "View All Activities →":
+    - /url: /Activities
+  - img
+  - text: 0 Completed
+  - img
+  - text: 0 Planned % 0% Avg Coverage
+  - img
+  - text: 0 L Total Water Used
+  - img
+  - text: $0.00 Total Pesticide Cost * Estimation only This Week — Sep 7-7
+  - img
+  - text: 0 Completed
+  - img
+  - text: 0 Planned % 0% Avg Coverage
+  - img
+  - text: 0 L Total Water Used
+  - img
+  - text: $0.00 Total Pesticide Cost * Estimation only
+  - img
+  - text: Spraying Activities Map
+  - button "Sep 6, 2026":
+    - img
+    - text: Sep 6, 2026
+  - img
+  - heading "No spraying activity on September 6, 2026" [level=3]
+  - img
+  - text: Today's Plan
+  - link "Schedule Activity":
+    - /url: /Planning
+    - button "Schedule Activity":
+      - img
+      - text: Schedule Activity
+  - img
+  - paragraph: No planned activities for today.
+```
+
+# Test source
+
+```ts
+  1   | import { type Page, type Locator, expect } from '@playwright/test';
+  2   | import { BasePage } from './base.page';
+  3   | 
+  4   | /**
+  5   |  * Page Object for the post-login landing page (Daily Summary, served at "/").
+  6   |  *
+  7   |  * Confirmed against the live DOM:
+  8   |  *  - the left sidebar shows the brand as an <h2> "DashBar". (A second
+  9   |  *    "DashBar" <h1> lives in a top header that's hidden at desktop width, so
+  10  |  *    we pin to the heading role + level to match exactly the visible one.)
+  11  |  *  - nav items are links: Daily Summary, Planning, Activities, Resources, Users.
+  12  |  *  - the bottom-left corner shows the logged-in user's name, email, account
+  13  |  *    name, and role as plain text (e.g. "Alex Y" / email / "Ronen" / "Account Admin").
+  14  |  *  - logout is an icon-only button with title="Logout" (no text), so its
+  15  |  *    accessible name comes from the title.
+  16  |  *  - the page renders a compact and a full-size layout for the same content
+  17  |  *    (responsive Tailwind classes), so several texts/labels exist twice in the
+  18  |  *    DOM with only one visible at a given viewport - locators below use
+  19  |  *    `.first()` and count-based invariants rather than pinning to one variant.
+  20  |  */
+  21  | export class DashboardPage extends BasePage {
+  22  |   readonly path = '/';
+  23  | 
+  24  |   /** Sidebar nav items present for this account. */
+  25  |   static readonly NAV_ITEMS = ['Daily Summary', 'Planning', 'Activities', 'Resources', 'Users'] as const;
+  26  | 
+  27  |   /** The two Daily Summary report periods, each rendered as its own card. */
+  28  |   static readonly SUMMARY_PERIODS = ['Yesterday', 'This Week'] as const;
+  29  | 
+  30  |   /** KPI tiles repeated inside every Daily Summary period card. */
+  31  |   static readonly KPI_TILES = [
+  32  |     'Completed',
+  33  |     'Planned',
+  34  |     'Avg Coverage',
+  35  |     'Total Water Used',
+  36  |     'Total Pesticide Cost',
+  37  |   ] as const;
+  38  | 
+  39  |   private readonly brand: Locator;
+  40  |   private readonly logoutButton: Locator;
+  41  |   private readonly dailySummaryHeading: Locator;
+  42  |   private readonly mapLabel: Locator;
+  43  |   private readonly dateSelectorButton: Locator;
+  44  |   private readonly todaysPlanLabel: Locator;
+  45  |   private readonly scheduleActivityButton: Locator;
+  46  | 
+  47  |   constructor(page: Page) {
+  48  |     super(page);
+  49  |     this.brand = page.getByRole('heading', { name: 'DashBar', level: 2 });
+  50  |     this.logoutButton = page.getByRole('button', { name: 'Logout' });
+  51  |     this.dailySummaryHeading = page.getByRole('heading', { name: 'Daily Summary', level: 1 });
+  52  |     this.mapLabel = page.getByText('Spraying Activities Map', { exact: true });
+  53  |     // The map's date selector renders the selected date as its label, e.g. "Jun 7, 2026".
+  54  |     this.dateSelectorButton = page.getByRole('button', { name: /^[A-Z][a-z]{2} \d{1,2}, \d{4}$/ });
+  55  |     this.todaysPlanLabel = page.getByText("Today's Plan", { exact: true });
+  56  |     this.scheduleActivityButton = page.getByRole('button', { name: 'Schedule Activity' });
+  57  |   }
+  58  | 
+  59  |   async logout(): Promise<void> {
+  60  |     await this.logoutButton.click();
+  61  |   }
+  62  | 
+  63  |   navLink(name: string): Locator {
+  64  |     return this.page.getByRole('link', { name, exact: true });
+  65  |   }
+  66  | 
+  67  |   /** URL redirected to "/" and the sidebar brand is visible. */
+  68  |   async expectLoaded(): Promise<void> {
+  69  |     await expect(
+  70  |       this.page,
+  71  |       'Not on the dashboard - the URL is not the site root (login may not have redirected here).',
+  72  |     ).toHaveURL(/staging-bar2\.proscout\.ai\/?$/, { timeout: 15_000 });
+  73  |     await expect(this.brand, 'Dashboard did not load - the "DashBar" sidebar brand is missing.').toBeVisible();
+  74  |   }
+  75  | 
+  76  |   async expectNavItems(): Promise<void> {
+  77  |     for (const item of DashboardPage.NAV_ITEMS) {
+> 78  |       await expect(this.navLink(item), `Sidebar navigation link "${item}" is missing.`).toBeVisible();
+      |                                                                                         ^ Error: Sidebar navigation link "Users" is missing.
+  79  |     }
+  80  |   }
+  81  | 
+  82  |   /** Bottom-left corner: logged-in user's name, email, account name, and role. */
+  83  |   async expectUserInfo(name: string, email: string, accountName: string, role: string): Promise<void> {
+  84  |     await expect(this.page.getByText(name, { exact: true }), `Logged-in user's name "${name}" not shown in the sidebar.`).toBeVisible();
+  85  |     await expect(this.page.getByText(email), `Logged-in user's email "${email}" not shown in the sidebar.`).toBeVisible();
+  86  |     await expect(this.page.getByText(accountName, { exact: true }), `Account name "${accountName}" not shown in the sidebar.`).toBeVisible();
+  87  |     await expect(this.page.getByText(role), `User role "${role}" not shown in the sidebar.`).toBeVisible();
+  88  |   }
+  89  | 
+  90  |   /**
+  91  |    * "Daily Summary" heading plus the "Yesterday" and "This Week" period cards,
+  92  |    * each carrying the same five KPI tiles (Completed, Planned, Avg Coverage,
+  93  |    * Total Water Used, Total Pesticide Cost). Counts are checked rather than
+  94  |    * scoped per-card: every tile must appear at least once per period.
+  95  |    */
+  96  |   async expectDailySummary(): Promise<void> {
+  97  |     await expect(this.dailySummaryHeading, 'Daily Summary heading is missing - the dashboard content did not load.').toBeVisible();
+  98  | 
+  99  |     for (const period of DashboardPage.SUMMARY_PERIODS) {
+  100 |       await expect(
+  101 |         this.page.getByText(period, { exact: false }).first(),
+  102 |         `Daily Summary is missing the "${period}" period card.`,
+  103 |       ).toBeVisible();
+  104 |     }
+  105 | 
+  106 |     for (const tile of DashboardPage.KPI_TILES) {
+  107 |       const label = this.page.getByText(tile, { exact: true });
+  108 |       await expect(label.first(), `Daily Summary is missing the "${tile}" KPI tile.`).toBeVisible();
+  109 |       expect(
+  110 |         await label.count(),
+  111 |         `KPI tile "${tile}" should appear once per period (>= ${DashboardPage.SUMMARY_PERIODS.length}).`,
+  112 |       ).toBeGreaterThanOrEqual(DashboardPage.SUMMARY_PERIODS.length);
+  113 |     }
+  114 |   }
+  115 | 
+  116 |   /** Spraying Activities Map section: heading plus a date-selector button (e.g. "Jun 7, 2026"). */
+  117 |   async expectSprayingActivitiesMap(): Promise<void> {
+  118 |     await expect(this.mapLabel.first(), 'Dashboard is missing the "Spraying Activities Map" section.').toBeVisible();
+  119 |     await expect(this.dateSelectorButton, 'Spraying Activities Map is missing its date-selector button (e.g. "Jun 7, 2026").').toBeVisible();
+  120 |   }
+  121 | 
+  122 |   /** Today's Plan panel: heading plus a green "Schedule Activity" call-to-action button. */
+  123 |   async expectTodaysPlanPanel(): Promise<void> {
+  124 |     await expect(this.todaysPlanLabel.first(), 'Dashboard is missing the "Today\'s Plan" panel.').toBeVisible();
+  125 |     await expect(this.scheduleActivityButton, "Today's Plan panel is missing the \"Schedule Activity\" button.").toBeVisible();
+  126 | 
+  127 |     const background = await this.scheduleActivityButton.evaluate(
+  128 |       (el) => getComputedStyle(el).backgroundColor,
+  129 |     );
+  130 |     const [red, green, blue] = background.match(/\d+/g)!.map(Number);
+  131 |     expect(green, 'The "Schedule Activity" button should be green (green channel dominant).').toBeGreaterThan(red);
+  132 |     expect(green, 'The "Schedule Activity" button should be green (green channel dominant).').toBeGreaterThan(blue);
+  133 |   }
+  134 | }
+  135 | 
+```

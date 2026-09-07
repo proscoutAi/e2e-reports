@@ -1,0 +1,265 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/activities.spec.ts >> Activities list >> Status filter supports selecting multiple options
+- Location: tests/ui/activities.spec.ts:71:3
+
+# Error details
+
+```
+Error: Did not land on /activities.
+
+expect(page).toHaveURL(expected) failed
+
+Expected pattern: /\/activities/i
+Received string:  "https://www.staging-bar2.proscout.ai/"
+Timeout: 15000ms
+
+Call log:
+  - Did not land on /activities. with timeout 15000ms
+    33 × unexpected value "https://www.staging-bar2.proscout.ai/"
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /Dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /Planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /Activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /Settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "System Management":
+      - /url: /system-management
+      - img
+      - text: System Management
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - heading "Daily Summary" [level=1]
+  - text: Yesterday — 6 Sep 2026
+  - link "View All Activities →":
+    - /url: /Activities
+  - img
+  - text: 0 Completed
+  - img
+  - text: 0 Planned % 0% Avg Coverage
+  - img
+  - text: 0 L Total Water Used
+  - img
+  - text: $0.00 Total Pesticide Cost * Estimation only This Week — Sep 7-7
+  - img
+  - text: 0 Completed
+  - img
+  - text: 0 Planned % 0% Avg Coverage
+  - img
+  - text: 0 L Total Water Used
+  - img
+  - text: $0.00 Total Pesticide Cost * Estimation only
+  - img
+  - text: Spraying Activities Map
+  - button "Sep 6, 2026":
+    - img
+    - text: Sep 6, 2026
+  - img
+  - heading "No spraying activity on September 6, 2026" [level=3]
+  - img
+  - text: Today's Plan
+  - link "Schedule Activity":
+    - /url: /Planning
+    - button "Schedule Activity":
+      - img
+      - text: Schedule Activity
+  - img
+  - paragraph: No planned activities for today.
+```
+
+# Test source
+
+```ts
+  1   | import { type Page, type Locator, expect } from '@playwright/test';
+  2   | import { BasePage } from './base.page';
+  3   | 
+  4   | /**
+  5   |  * Page Object for the Activities list ("Spray Activities", served at
+  6   |  * /activities).
+  7   |  *
+  8   |  * Confirmed against the live DOM:
+  9   |  *  - page heading is an <h1> "Spray Activities".
+  10  |  *  - filter dropdowns are buttons (shadcn-style), not <select> elements.
+  11  |  *  - search is <input placeholder="Search">; date pickers are two
+  12  |  *    <input type="date">.
+  13  |  *  - the list is a real <table>; column headers carry the implicit
+  14  |  *    columnheader role.
+  15  |  *  - the count renders as text "All Activities (N)".
+  16  |  */
+  17  | export class ActivitiesPage extends BasePage {
+  18  |   readonly path = '/activities';
+  19  | 
+  20  |   /** Table columns the doc requires (excludes the leading select checkbox). */
+  21  |   static readonly COLUMNS = [
+  22  |     'Map', 'Date', 'Greenhouse', 'Sprayer', 'Assignee',
+  23  |     'Pesticides', 'Execution Status', 'Cost', 'Resources', 'Actions',
+  24  |   ] as const;
+  25  | 
+  26  |   /** Filter dropdown buttons. */
+  27  |   static readonly FILTER_DROPDOWNS = [
+  28  |     'All Status', 'All Greenhouses', 'All Personnel', 'All Sprayers', 'All Pesticides',
+  29  |   ] as const;
+  30  | 
+  31  |   private readonly heading: Locator;
+  32  |   private readonly searchField: Locator;
+  33  |   private readonly dateInputs: Locator;
+  34  |   private readonly table: Locator;
+  35  |   private readonly rows: Locator;
+  36  | 
+  37  |   constructor(page: Page) {
+  38  |     super(page);
+  39  |     this.heading = page.getByRole('heading', { name: 'Spray Activities', level: 1 });
+  40  |     // .first(): opening a multi-select dropdown reveals its own "Search" option
+  41  |     // filter (portalled to the end of the DOM), so the filters-panel search is
+  42  |     // the first match.
+  43  |     this.searchField = page.getByPlaceholder('Search').first();
+  44  |     this.dateInputs = page.locator('input[type="date"]');
+  45  |     this.table = page.getByRole('table');
+  46  |     // Direct-child rows only (XPath child path). A rendered map thumbnail injects
+  47  |     // its own nested <tr>s inside a cell; a CSS `tbody tr` descendant selector
+  48  |     // would wrongly count those, so we take only the table's own data rows.
+  49  |     this.rows = this.table.locator('xpath=tbody/tr');
+  50  |   }
+  51  | 
+  52  |   async expectLoaded(): Promise<void> {
+> 53  |     await expect(this.page, 'Did not land on /activities.').toHaveURL(/\/activities/i, { timeout: 15_000 }); // case-insensitive: route-casing regression
+      |                                                             ^ Error: Did not land on /activities.
+  54  |     await expect(
+  55  |       this.heading,
+  56  |       'Activities page did not load - the "Spray Activities" heading is missing.',
+  57  |     ).toBeVisible();
+  58  |   }
+  59  | 
+  60  |   /**
+  61  |    * Search field, 5 filter dropdowns, 2 date pickers, Clear All + Apply Filters.
+  62  |    * For the inputs we assert toBeEditable (the control exists AND the user can
+  63  |    * type into it) rather than mere visibility, and without side effects.
+  64  |    */
+  65  |   async expectFiltersPanel(): Promise<void> {
+  66  |     await expect(
+  67  |       this.searchField,
+  68  |       'Activities search box not found/editable - the filters panel did not render.',
+  69  |     ).toBeEditable();
+  70  |     for (const name of ActivitiesPage.FILTER_DROPDOWNS) {
+  71  |       await expect(this.page.getByRole('button', { name }), `Filters panel is missing the "${name}" dropdown.`).toBeVisible();
+  72  |     }
+  73  |     await expect(this.dateInputs, 'Filters panel should have exactly 2 date inputs (from/to).').toHaveCount(2);
+  74  |     await expect(this.dateInputs.nth(0), 'The "from" date filter is not editable.').toBeEditable();
+  75  |     await expect(this.dateInputs.nth(1), 'The "to" date filter is not editable.').toBeEditable();
+  76  |     await expect(this.page.getByRole('button', { name: 'Clear All' }), 'Filters panel is missing the "Clear All" button.').toBeVisible();
+  77  |     await expect(this.page.getByRole('button', { name: 'Apply Filters' }), 'Filters panel is missing the "Apply Filters" button.').toBeVisible();
+  78  |   }
+  79  | 
+  80  |   /**
+  81  |    * Open the Status filter and verify it lists its options. Only "Scheduled" is
+  82  |    * always guaranteed — "Executed/Completed" only appears when the staging dataset
+  83  |    * contains executed activities. Closes with Escape (no side effect).
+  84  |    */
+  85  |   async expectStatusFilterOptions(): Promise<void> {
+  86  |     await this.page.getByRole('button', { name: 'All Status' }).click();
+  87  |     await expect(this.page.getByRole('option', { name: 'Scheduled' }), 'Status filter is missing the always-present "Scheduled" option.').toBeVisible();
+  88  |     await this.page.keyboard.press('Escape');
+  89  |   }
+  90  | 
+  91  |   /**
+  92  |    * Returns the exact label of the "executed" option in the Status filter dropdown
+  93  |    * ('Executed' after a UI rename, historically 'Completed'), or null if no
+  94  |    * executed activities exist in the current staging dataset.
+  95  |    * Used to conditionally skip tests that require executed-activity data.
+  96  |    */
+  97  |   async executedStatusLabel(): Promise<string | null> {
+  98  |     // The initial unfiltered fetch must resolve before applying a status filter -
+  99  |     // otherwise "Apply Filters" races the page's own initial request and the
+  100 |     // filtered result comes back as "All Activities (0)" even when matching
+  101 |     // activities exist.
+  102 |     await this.expectActivityCounterPositive();
+  103 |     await this.page.getByRole('button', { name: 'All Status' }).click();
+  104 |     let label: string | null = null;
+  105 |     // EXACT match is essential: substring matching would hit the separate
+  106 |     // "Executed (Manual)" option (manual executions carry no execution data).
+  107 |     // Field executions are labeled 'Completed' today ('Executed' for a while
+  108 |     // after a UI rename, and historically 'Completed').
+  109 |     for (const name of ['Completed', 'Executed']) {
+  110 |       if (await this.page.getByRole('option', { name, exact: true }).count() > 0) {
+  111 |         label = name;
+  112 |         break;
+  113 |       }
+  114 |     }
+  115 |     if (!label) {
+  116 |       await this.page.keyboard.press('Escape');
+  117 |       return null;
+  118 |     }
+  119 |     // A filter option can exist even when no activities have that status in the
+  120 |     // current dataset. The unfiltered list is paginated and sorted by date, so
+  121 |     // checking the first page of rows for the label is unreliable - apply the
+  122 |     // filter and read the "All Activities (N)" counter instead, then clear it
+  123 |     // back to the unfiltered view for the caller.
+  124 |     await this.page.getByRole('option', { name: label, exact: true }).click();
+  125 |     await this.page.keyboard.press('Escape');
+  126 |     await Promise.all([
+  127 |       this.page.waitForResponse(resp => resp.request().method() === 'GET' && resp.url().includes('/activities')),
+  128 |       this.page.getByRole('button', { name: 'Apply Filters' }).click(),
+  129 |     ]);
+  130 |     // Wait for the filtered table to actually render before reading the
+  131 |     // counter: on a slow staging backend a fixed short sleep races the
+  132 |     // re-render and reads a stale/zero count (which would wrongly report
+  133 |     // "no executed activities" and skip the caller).
+  134 |     await expect(this.rows.first()).not.toContainText('Loading activities', { timeout: 30_000 }).catch(() => {});
+  135 |     await this.page.waitForTimeout(500);
+  136 |     const count = await this.activityCount();
+  137 |     await this.clearAllFilters();
+  138 |     return count > 0 ? label : null;
+  139 |   }
+  140 | 
+  141 |   /**
+  142 |    * Returns all option labels currently available in the Status filter dropdown.
+  143 |    * Used by tests that exercise the multi-select UI regardless of data availability.
+  144 |    */
+  145 |   async statusOptions(): Promise<string[]> {
+  146 |     await this.page.getByRole('button', { name: 'All Status' }).click();
+  147 |     const texts = await this.page.getByRole('option').allInnerTexts();
+  148 |     await this.page.keyboard.press('Escape');
+  149 |     return texts.map(t => t.trim()).filter(Boolean);
+  150 |   }
+  151 | 
+  152 |   /**
+  153 |    * "All Activities (N)" counter shows N > 0.
+```
