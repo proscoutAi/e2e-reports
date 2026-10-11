@@ -1,0 +1,355 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/planning.spec.ts >> Planning >> Pesticides & Dosage: adding, dosage entry, and removal update Cost Estimate
+- Location: tests/ui/planning.spec.ts:134:3
+
+# Error details
+
+```
+Error: Pesticide card is missing its dosage input.
+
+expect(locator).toBeVisible() failed
+
+Locator: locator('.rounded-xl.border-purple-200').first().locator('input[type="text"]').first()
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Pesticide card is missing its dosage input. with timeout 5000ms
+  - waiting for locator('.rounded-xl.border-purple-200').first().locator('input[type="text"]').first()
+
+```
+
+```yaml
+- img "ProScout logo"
+- heading "DashBar" [level=2]
+- text: Navigation
+- list:
+  - listitem:
+    - link "Daily Summary":
+      - /url: /Dashboard
+      - img
+      - text: Daily Summary
+  - listitem:
+    - link "Planning":
+      - /url: /Planning
+      - img
+      - text: Planning
+  - listitem:
+    - link "Activities":
+      - /url: /Activities
+      - img
+      - text: Activities
+  - listitem:
+    - link "Resources":
+      - /url: /Settings
+      - img
+      - text: Resources
+  - listitem:
+    - link "System Management":
+      - /url: /system-management
+      - img
+      - text: System Management
+- text: AY
+- paragraph: Alex Y
+- paragraph: alex.y@revantlabs.com
+- paragraph: Ronen
+- paragraph: account admin
+- button "Change language":
+  - img
+  - text: Change language
+- button "Logout":
+  - img
+- main:
+  - heading "Create Spray Activity" [level=1]:
+    - img
+    - text: Create Spray Activity
+  - text: Create Spray Activity Greenhouses *
+  - button "Greenhouses *":
+    - img
+    - text: Hod Hasharon - Weizman
+  - text: Select Planned Dates *
+  - button "Select Planned Dates":
+    - img
+    - text: Select Planned Dates
+  - text: Assign To
+  - button "Select personnel..."
+  - text: Sprayers
+  - button "Select sprayers..."
+  - text: Planned Water (L)
+  - spinbutton "Planned Water (L)"
+  - text: Est. Fills
+  - spinbutton "Est. Fills"
+  - text: Pesticides & Dosage *
+  - button "Add Pesticide":
+    - img
+    - text: Add Pesticide
+  - img
+  - heading "RODEO" [level=4]
+  - text: "Dosage:"
+  - button "Ratio"
+  - button "% of tank"
+  - textbox "0"
+  - combobox: ml
+  - textbox "0": "1"
+  - combobox: m²
+  - paragraph: "Price: $10.00/L"
+  - text: "Stock: 10 L PHI: 1 days"
+  - strong: "Active Ingredient:"
+  - text: METALAXYL-M (MEFENOXAM)
+  - button:
+    - img
+  - text: Number of Rows
+  - combobox: All
+  - text: 0 Rows Planned Time
+  - textbox "Planned Time": 09:00
+  - text: Notes
+  - textbox "Notes":
+    - /placeholder: Additional notes or special instructions...
+  - text: Recurrence
+  - combobox: No Recurrence
+  - button "Schedule Activity" [disabled]:
+    - img
+    - text: Schedule Activity
+  - button "Print":
+    - img
+    - text: Print
+  - paragraph: "To save this planning, please fill: Planned Date."
+  - img
+  - text: Cost Estimate
+  - paragraph: Hod Hasharon - Weizman - 2505 m²
+  - img
+  - text: Water --
+  - img
+  - text: Pesticides Pesticide Totals
+  - paragraph: RODEO
+  - paragraph: 0.00 L
+  - text: $0.00 Total Estimate $0.00
+  - paragraph: Costs shown are estimates based on data currently available in the system. For accurate figures, verify that all prices are up to date.
+  - img
+  - text: Recent Activities
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Ronen Greenhous 1" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Hod Hasharon - Weizman" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+  - heading "Ronen Greenhous 1" [level=4]
+  - text: beta3 Jul 15 Scheduled Click to use template
+```
+
+# Test source
+
+```ts
+  425 |     await expect(
+  426 |       this.assignToButton.locator('div.rounded-md.border', { hasText: name }),
+  427 |       `Selected assignee "${name}" did not appear as a chip in the Assign To field.`,
+  428 |     ).toBeVisible();
+  429 |   }
+  430 | 
+  431 |   /** Clears and fills the Planned Water field, then blurs to trigger Cost Estimate update. */
+  432 |   async fillPlannedWater(litres: number): Promise<void> {
+  433 |     await this.plannedWaterInput.fill(String(litres));
+  434 |     await this.plannedWaterInput.press('Tab');
+  435 |   }
+  436 | 
+  437 |   /** Cost Estimate water row shows the entered volume. */
+  438 |   async expectCostEstimateWater(litres: number): Promise<void> {
+  439 |     await expect(
+  440 |       this.costEstimatePanel,
+  441 |       `Cost Estimate panel did not update to show the entered water volume (${litres} L).`,
+  442 |     ).toContainText(`${litres} L`);
+  443 |   }
+  444 | 
+  445 |   /**
+  446 |    * Est. Fills is a manually-entered numeric field (placeholder "e.g. 3").
+  447 |    * Auto-calculation from Planned Water ÷ sprayer capacity is not active
+  448 |    * in this staging build — the field stays empty until the user types a value.
+  449 |    */
+  450 |   async expectEstFillsEditable(): Promise<void> {
+  451 |     await expect(this.estFillsInput, 'Est. Fills field is not editable / not found.').toBeEditable();
+  452 |     await expect(this.estFillsInput, 'Est. Fills field has the wrong placeholder (expected "e.g. 3").').toHaveAttribute('placeholder', 'e.g. 3');
+  453 |   }
+  454 | 
+  455 |   /** Fills the Est. Fills field and blurs to commit (Step 2d). */
+  456 |   async fillEstFills(count: number): Promise<void> {
+  457 |     await this.estFillsInput.fill(String(count));
+  458 |     await this.estFillsInput.press('Tab');
+  459 |   }
+  460 | 
+  461 |   // ── Pesticides & Dosage ──────────────────────────────────────────────────
+  462 | 
+  463 |   /** Each added pesticide renders as a purple-bordered card. */
+  464 |   private pesticideCards(): Locator {
+  465 |     return this.page.locator('.rounded-xl.border-purple-200');
+  466 |   }
+  467 | 
+  468 |   async expectAddPesticideButtonVisible(): Promise<void> {
+  469 |     await expect(this.addPesticideButton, 'The "+ Add Pesticide" button is not visible on the form.').toBeVisible();
+  470 |   }
+  471 | 
+  472 |   /**
+  473 |    * Clicks "+ Add Pesticide", selects the option at optionIndex (0-based),
+  474 |    * and returns the pesticide name (text before the price parenthesis).
+  475 |    */
+  476 |   /**
+  477 |    * Add a specific pesticide by name from the "+ Add Pesticide" list (scoped to the
+  478 |    * start of the option label). Use this instead of addPesticide(index) when the
+  479 |    * account inventory holds several pesticides, so the right one is picked.
+  480 |    */
+  481 |   async addPesticideByName(name: string): Promise<string> {
+  482 |     const options = await this.dropdownOptionsFor(this.addPesticideButton);
+  483 |     const option = options.filter({ hasText: new RegExp(`^${name}\\b`) }).first();
+  484 |     await expect(
+  485 |       option,
+  486 |       `Pesticide "${name}" is not in the "+ Add Pesticide" list - is it in the account inventory?`,
+  487 |     ).toBeVisible({ timeout: 10_000 });
+  488 |     const fullText = await option.innerText();
+  489 |     await option.click();
+  490 |     return EditActivityPage.extractOptionName(fullText);
+  491 |   }
+  492 | 
+  493 |   async addPesticide(optionIndex: number): Promise<string> {
+  494 |     const options = await this.dropdownOptionsFor(this.addPesticideButton);
+  495 |     await expect(
+  496 |       options.nth(optionIndex),
+  497 |       'Pesticide dropdown has no option to pick - the account inventory has no pesticides ' +
+  498 |         '(the "+ Add Pesticide" list shows "No pesticides found").',
+  499 |     ).toBeVisible({ timeout: 10_000 });
+  500 |     const fullText = await options.nth(optionIndex).innerText();
+  501 |     await options.nth(optionIndex).click();
+  502 |     return EditActivityPage.extractOptionName(fullText);
+  503 |   }
+  504 | 
+  505 |   async expectPesticideCardCount(count: number): Promise<void> {
+  506 |     await expect(this.pesticideCards(), `Expected ${count} pesticide card(s) on the form.`).toHaveCount(count);
+  507 |   }
+  508 | 
+  509 |   async expectPesticideCardVisible(name: string): Promise<void> {
+  510 |     await expect(
+  511 |       this.pesticideCards().filter({ hasText: name }).first(),
+  512 |       `Pesticide card for "${name}" is not visible on the form.`,
+  513 |     ).toBeVisible();
+  514 |   }
+  515 | 
+  516 |   /**
+  517 |    * Asserts the pesticide card at cardIndex shows all required elements:
+  518 |    * name (h4), dosage input, two unit comboboxes (ml/L and area unit),
+  519 |    * Price, Stock, Active Ingredient labels, and the remove button.
+  520 |    */
+  521 |   async expectPesticideCardStructure(cardIndex: number): Promise<void> {
+  522 |     const card = this.pesticideCards().nth(cardIndex);
+  523 |     await expect(card.locator('h4'), 'Pesticide card is missing its name heading.').toBeVisible();
+  524 |     const dosageInput = card.locator('input[type="text"]').first();
+> 525 |     await expect(dosageInput, 'Pesticide card is missing its dosage input.').toBeVisible();
+      |                                                                              ^ Error: Pesticide card is missing its dosage input.
+  526 |     await expect(dosageInput, 'Pesticide card dosage input is not editable.').toBeEditable();
+  527 |     expect(
+  528 |       await card.locator('button[role="combobox"]').count(),
+  529 |       'Pesticide card should have two unit selectors (ml/L numerator + area denominator).',
+  530 |     ).toBe(2);
+  531 |     await expect(card.getByText(/Price:/), 'Pesticide card is missing the "Price:" label.').toBeVisible();
+  532 |     await expect(card.getByText(/Stock:/), 'Pesticide card is missing the "Stock:" label.').toBeVisible();
+  533 |     await expect(card.getByText(/Active Ingredient:/), 'Pesticide card is missing the "Active Ingredient:" label.').toBeVisible();
+  534 |     await expect(card.locator('button').last(), 'Pesticide card is missing its remove (x) button.').toBeVisible();
+  535 |   }
+  536 | 
+  537 |   /** Fills the dosage input for the card at cardIndex and presses Tab to commit. */
+  538 |   async fillPesticideDosage(cardIndex: number, dosage: number): Promise<void> {
+  539 |     const dosageInput = this.pesticideCards().nth(cardIndex).locator('input[type="text"]').first();
+  540 |     await dosageInput.fill(String(dosage));
+  541 |     await dosageInput.press('Tab');
+  542 |   }
+  543 | 
+  544 |   /**
+  545 |    * Reads the pesticide card's displayed Stock (Step 2c baseline). The card shows
+  546 |    * "Stock: <n> L" in a badge span; returns the numeric litres.
+  547 |    */
+  548 |   async pesticideStock(cardIndex = 0): Promise<number> {
+  549 |     const text = await this.pesticideCards().nth(cardIndex).getByText(/Stock:/).innerText();
+  550 |     const match = text.match(/Stock:\s*([\d.]+)\s*L/);
+  551 |     if (!match) throw new Error(`Could not parse pesticide stock from "${text}"`);
+  552 |     return parseFloat(match[1]);
+  553 |   }
+  554 | 
+  555 |   /** The card's Price ($/L) value (e.g. 10.0 from "Price: $10.00/L"). */
+  556 |   async pesticidePricePerLiter(cardIndex = 0): Promise<number> {
+  557 |     const text = await this.pesticideCards().nth(cardIndex).getByText(/Price:/).innerText();
+  558 |     return parseFloat(text.match(/Price:\s*\$([\d.]+)\/L/)?.[1] ?? '0');
+  559 |   }
+  560 | 
+  561 |   /**
+  562 |    * The card's Active Ingredient value. Read from the whole card text - the label
+  563 |    * renders as "<strong>Active Ingredient:</strong> VALUE", so a getByText on the
+  564 |    * label alone would return just the (value-less) <strong>.
+  565 |    */
+  566 |   async pesticideActiveIngredient(cardIndex = 0): Promise<string> {
+  567 |     const text = await this.pesticideCards().nth(cardIndex).innerText();
+  568 |     return text.match(/Active Ingredient:\s*(.+)/)?.[1]?.trim() ?? '';
+  569 |   }
+  570 | 
+  571 |   /**
+  572 |    * The pesticide card's dosage is expressed as "<numerator> / <denominator>"
+  573 |    * (e.g. "ml" over "Square Meter"), each a Radix Select. Returns both current
+  574 |    * labels. The card always renders exactly two comboboxes (numerator, denominator).
+  575 |    */
+  576 |   async pesticideDosageUnits(cardIndex = 0): Promise<{ numerator: string; denominator: string }> {
+  577 |     const combos = this.pesticideCards().nth(cardIndex).locator('button[role="combobox"]');
+  578 |     return {
+  579 |       numerator: (await combos.nth(0).innerText()).trim(),
+  580 |       denominator: (await combos.nth(1).innerText()).trim(),
+  581 |     };
+  582 |   }
+  583 | 
+  584 |   /**
+  585 |    * Sets the dosage denominator unit (the second combobox: L / Square Meter / dunam).
+  586 |    * The doc plans dosage in ml/L, so pesticide consumed = dosage(ml/L) × Planned Water(L)
+  587 |    * - independent of greenhouse area. The control is a Radix Select: click the
+  588 |    * trigger, pick the option, and confirm the trigger now shows the chosen label.
+  589 |    */
+  590 |   async setPesticideDosageDenominator(cardIndex: number, label: string): Promise<void> {
+  591 |     const denominator = this.pesticideCards().nth(cardIndex).locator('button[role="combobox"]').nth(1);
+  592 |     await denominator.click();
+  593 |     await this.page.getByRole('option', { name: label, exact: true }).click();
+  594 |     await expect(denominator).toHaveText(label);
+  595 |   }
+  596 | 
+  597 |   /** Cost Estimate shows the pesticide name, a dosage formula (… × $…/L), and Total Estimate. */
+  598 |   async expectCostEstimatePesticideEntry(name: string): Promise<void> {
+  599 |     await expect(this.costEstimatePanel, `Cost Estimate panel does not list the pesticide "${name}".`).toContainText(name);
+  600 |     await expect(this.costEstimatePanel, 'Cost Estimate panel does not show the pesticide dosage formula ($/L).').toContainText('$/L');
+  601 |     await expect(this.costEstimatePanel, 'Cost Estimate panel does not show a "Total Estimate".').toContainText('Total Estimate');
+  602 |   }
+  603 | 
+  604 |   /** Reads the Total Estimate dollar amount from the Cost Estimate panel. */
+  605 |   async getTotalEstimateAmount(): Promise<number> {
+  606 |     await expect(this.costEstimatePanel, 'Cost Estimate panel does not show a "Total Estimate" to read.').toContainText('Total Estimate');
+  607 |     const text = await this.costEstimatePanel.innerText();
+  608 |     const match = text.match(/Total Estimate\s+\$([0-9,]+\.?\d*)/);
+  609 |     return parseFloat(match?.[1]?.replace(',', '') ?? '0');
+  610 |   }
+  611 | 
+  612 |   /** Clicks the remove (×) button on the card at cardIndex. */
+  613 |   async removePesticideCard(cardIndex: number): Promise<void> {
+  614 |     await this.pesticideCards().nth(cardIndex).locator('button').last().click();
+  615 |   }
+  616 | 
+  617 |   // ── Number of Rows ──────────────────────────────────────────────────────
+  618 | 
+  619 |   /** The Number of Rows select shows "All" as the selected option by default. */
+  620 |   async expectNumberOfRowsDefault(): Promise<void> {
+  621 |     // Native <select>: check the currently-selected <option> text.
+  622 |     await expect(this.numberOfRowsButton.locator('option:checked'), 'Number of Rows should default to "All".').toHaveText('All');
+  623 |   }
+  624 | 
+  625 |   /**
+```

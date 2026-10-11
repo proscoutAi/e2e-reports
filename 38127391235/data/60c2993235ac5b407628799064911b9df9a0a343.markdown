@@ -1,0 +1,118 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/pesticide-stock-deduction.spec.ts >> Resources -> Pesticides: stock deduction on manual execution >> Planned activity with pesticide, marked Executed (Manual), deducts stock
+- Location: tests/ui/pesticide-stock-deduction.spec.ts:44:3
+
+# Error details
+
+```
+Error: Login page did not load - the "Welcome to DashBar" heading is missing.
+
+expect(locator).toBeVisible() failed
+
+Locator: getByText('Welcome to DashBar')
+Expected: visible
+Timeout: 5000ms
+Error: element(s) not found
+
+Call log:
+  - Login page did not load - the "Welcome to DashBar" heading is missing. with timeout 5000ms
+  - waiting for getByText('Welcome to DashBar')
+    - waiting for" https://staging-bar2.proscout.ai/.well-known/sgcaptcha/?r=%2Flogin&y=ipc:4.149.237.35:1791710501.951" navigation to finish...
+    - navigated to "https://staging-bar2.proscout.ai/.well-known/sgcaptcha/?r=%2Flogin&y=ipc:4.149.237.35:1791710501.951"
+
+```
+
+```yaml
+- img "Robot"
+- heading "staging-bar2.proscout.ai" [level=1]
+- paragraph: Checking the site connection security
+- img "CDN icon"
+- contentinfo:
+  - paragraph: This page requires cookies to be enabled in your browser settings. Please check this setting and enable cookies (if disabled)
+```
+
+# Test source
+
+```ts
+  1  | import { type Page, type Locator, expect } from '@playwright/test';
+  2  | import { BasePage } from './base.page';
+  3  | 
+  4  | /**
+  5  |  * Page Object for the proscout login screen (/login).
+  6  |  *
+  7  |  * Selectors below are confirmed against the live DOM:
+  8  |  *  - email/password are <input id="email|password"> with <label for=...>,
+  9  |  *    so getByLabel() resolves them via the accessible name.
+  10 |  *  - the submit button reads "Sign In".
+  11 |  *  - an invalid login renders a toast div with text "Invalid credentials"
+  12 |  *    (no role="alert"), so we match on text.
+  13 |  *  - "Welcome to DashBar" is styled text, NOT an <h1>, so we match by text.
+  14 |  *  - the logo is <img alt="ProScout logo">; "Forgot Password?" is a link.
+  15 |  */
+  16 | export class LoginPage extends BasePage {
+  17 |   readonly path = '/login';
+  18 | 
+  19 |   private readonly heading: Locator;
+  20 |   private readonly logo: Locator;
+  21 |   private readonly emailInput: Locator;
+  22 |   private readonly passwordInput: Locator;
+  23 |   private readonly submitButton: Locator;
+  24 |   private readonly forgotPasswordLink: Locator;
+  25 |   private readonly errorToast: Locator;
+  26 | 
+  27 |   constructor(page: Page) {
+  28 |     super(page);
+  29 |     this.heading = page.getByText('Welcome to DashBar');
+  30 |     this.logo = page.getByRole('img', { name: 'ProScout logo' });
+  31 |     this.emailInput = page.getByLabel('Email');
+  32 |     this.passwordInput = page.getByLabel('Password');
+  33 |     this.submitButton = page.getByRole('button', { name: 'Sign In' });
+  34 |     this.forgotPasswordLink = page.getByRole('link', { name: 'Forgot Password?' });
+  35 |     this.errorToast = page.getByText('Invalid credentials');
+  36 |   }
+  37 | 
+  38 |   /** Pre-login assertions: every element the login page should show. */
+  39 |   async expectLoginFormVisible(): Promise<void> {
+> 40 |     await expect(this.heading, 'Login page did not load - the "Welcome to DashBar" heading is missing.').toBeVisible();
+     |                                                                                                          ^ Error: Login page did not load - the "Welcome to DashBar" heading is missing.
+  41 |     await expect(this.logo, 'Login page is missing the ProScout logo.').toBeVisible();
+  42 |     await expect(this.emailInput, 'Login page is missing the Email field.').toBeVisible();
+  43 |     await expect(this.passwordInput, 'Login page is missing the Password field.').toBeVisible();
+  44 |     await expect(this.submitButton, 'Login page is missing the "Sign In" button.').toBeVisible();
+  45 |     await expect(this.forgotPasswordLink, 'Login page is missing the "Forgot Password?" link.').toBeVisible();
+  46 |   }
+  47 | 
+  48 |   async login(email: string, password: string): Promise<void> {
+  49 |     await this.emailInput.fill(email);
+  50 |     await this.passwordInput.fill(password);
+  51 |     await this.submitButton.click();
+  52 |   }
+  53 | 
+  54 |   /**
+  55 |    * A successful login posts to /auth/login then redirects to the dashboard.
+  56 |    * That round-trip + dashboard load takes several seconds, so we give the URL
+  57 |    * assertion a generous timeout rather than the 5s default.
+  58 |    */
+  59 |   async expectLoggedIn(): Promise<void> {
+  60 |     await expect(
+  61 |       this.page,
+  62 |       'Login did not complete - still on /login after submitting (credentials rejected, or the redirect did not happen).',
+  63 |     ).not.toHaveURL(/\/login/i, { timeout: 15_000 }); // case-insensitive: guard against a capitalized "/Login" false-positive
+  64 |   }
+  65 | 
+  66 |   async expectLoginError(): Promise<void> {
+  67 |     await expect(
+  68 |       this.errorToast,
+  69 |       'Expected an "Invalid credentials" error toast after a bad login, but it did not appear.',
+  70 |     ).toBeVisible();
+  71 |   }
+  72 | }
+  73 | 
+```
