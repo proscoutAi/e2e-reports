@@ -1,0 +1,72 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: auth.setup.ts >> Authenticate and save session
+- Location: tests/auth.setup.ts:13:1
+
+# Error details
+
+```
+Error: expect(page).not.toHaveURL(expected) failed
+
+Expected pattern: not /\/login/
+Received string: "https://www.staging-bar2.proscout.ai/login?redirect=%2F"
+Timeout: 15000ms
+
+Call log:
+  - Expect "not toHaveURL" with timeout 15000ms
+    34 × unexpected value "https://www.staging-bar2.proscout.ai/login?redirect=%2F"
+
+```
+
+```yaml
+- img "ProScout logo"
+- text: Welcome to DashBar Please sign in to your account Email
+- textbox "Email" [disabled]:
+  - /placeholder: Enter your email
+  - text: alex.y@revantlabs.com
+- text: Password
+- textbox "Password" [disabled]:
+  - /placeholder: Enter your password
+  - text: jef?rJkpgy
+- button "Signing in..." [disabled]:
+  - img
+  - text: Signing in...
+- link "Forgot Password?":
+  - /url: /forgot-password
+```
+
+# Test source
+
+```ts
+  1  | import { test as setup, expect } from '@playwright/test';
+  2  | import { config } from '@config/env';
+  3  | import { STORAGE_STATE } from '../playwright.config';
+  4  | 
+  5  | /**
+  6  |  * Authentication setup - runs once before the test suite (it's the 'setup'
+  7  |  * project, a dependency of 'chrome'). It performs a real UI login and saves the
+  8  |  * resulting session (proscout stores its token in localStorage) to disk, so
+  9  |  * every other test starts already logged in.
+  10 |  *
+  11 |  * Re-runs each invocation, so the saved token is always fresh.
+  12 |  */
+  13 | setup('Authenticate and save session', async ({ page }) => {
+  14 |   await page.goto('/login');
+  15 |   await page.getByLabel('Email').fill(config.auth.email);
+  16 |   await page.getByLabel('Password').fill(config.auth.password);
+  17 |   await page.getByRole('button', { name: 'Sign In' }).click();
+  18 | 
+  19 |   // Wait for the redirect off /login so we know the token is stored.
+> 20 |   await expect(page).not.toHaveURL(/\/login/, { timeout: 15_000 });
+     |                          ^ Error: expect(page).not.toHaveURL(expected) failed
+  21 | 
+  22 |   await page.context().storageState({ path: STORAGE_STATE });
+  23 | });
+  24 | 
+```
